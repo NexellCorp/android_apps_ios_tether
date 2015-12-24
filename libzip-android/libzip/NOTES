@@ -1,0 +1,2 @@
+The zip*.{c,h} files are from libzip 0.10.1;  the Application.mk and Android.mk
+files come from @julienr (https://github.com/julienr/libzip-android).
