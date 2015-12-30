@@ -131,6 +131,7 @@ int32_t IIPodDeviceManagerService::ChangeMode( int32_t mode )
 		{
 			ALOGD( "[IIPodDeviceManagerService] system(\"usbmuxdd -X\"); \n");
 			system("/system/bin/usbmuxdd -X");
+			sleep(2);
 			ALOGD( "[IIPodDeviceManagerService] system(\"usbAudio\"); \n");
 			system("/system/bin/usbAudio 2");
 		}

@@ -33,7 +33,6 @@
 
 #include "usb.h"
 #include "log.h"
-#include "device.h"
 #include "utils.h"
 
 #if (defined(LIBUSB_API_VERSION) && (LIBUSB_API_VERSION >= 0x01000102)) || (defined(LIBUSBX_API_VERSION) && (LIBUSBX_API_VERSION >= 0x01000102))
@@ -574,6 +573,7 @@ static int set_config_usb_device(libusb_device* dev, int config_id)
 	uint8_t address = libusb_get_device_address(dev);
 	struct libusb_device_descriptor devdesc;
 	int found = 0;
+
 	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t]  \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	FOREACH(struct usb_device *usbdev, &device_list) {
@@ -587,7 +587,7 @@ static int set_config_usb_device(libusb_device* dev, int config_id)
 		return 0; //device already found
 
 	if((res = libusb_get_device_descriptor(dev, &devdesc)) != 0) {
-		usbmuxd_log(LL_WARNING, "Could not get device descriptor for device %d-%d: %d", bus, address, res);
+		printf("## \e[31m Could not get device descriptor for device %d-%d: %d \e[0m\n", bus, address, res);
 		return -1;
 	}
 	if(devdesc.idVendor != VID_APPLE)
@@ -597,20 +597,24 @@ static int set_config_usb_device(libusb_device* dev, int config_id)
 		return -1;
 
 	libusb_device_handle *handle;
-	usbmuxd_log(LL_INFO, "Found new device with v/p %04x:%04x at %d-%d", devdesc.idVendor, devdesc.idProduct, bus, address);
+	printf("##  Found new device with v/p %04x:%04x at %d-%d\n", devdesc.idVendor, devdesc.idProduct, bus, address);
 
 	if((res = libusb_open(dev, &handle)) != 0) {
-		usbmuxd_log(LL_WARNING, "Could not open device %d-%d: %d", bus, address, res);
+		printf("## \e[31m Could not open device %d-%d: %d\e[0m\n", bus, address, res);
 		return -1;
 	}
 
 	int current_config = 0;
 	if((res = libusb_get_configuration(handle, &current_config)) != 0) {
-		usbmuxd_log(LL_WARNING, "Could not get configuration for device %d-%d: %d", bus, address, res);
+		printf("## \e[31m Could not get configuration for device %d-%d: %d\e[0m\n", bus, address, res);
 		libusb_close(handle);
 		return -1;
 	}
-	if (current_config != devdesc.bNumConfigurations) {
+
+	printf("Configuration status. config_id:%d, current_config:%d \n", config_id, current_config);
+
+	if (config_id != current_config) 
+	{
 		struct libusb_config_descriptor *config;
 		if((res = libusb_get_active_config_descriptor(dev, &config)) != 0) {
 			usbmuxd_log(LL_NOTICE, "Could not get old configuration descriptor for device %d-%d: %d", bus, address, res);
@@ -639,7 +643,7 @@ static int set_config_usb_device(libusb_device* dev, int config_id)
 		//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] libusb_set_configuration res:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, res);
 
 		if((res) != 0) {
-			printf( "Could not set configuration %d for device %d-%d: %d \n", devdesc.bNumConfigurations, bus, address, res);
+			printf("## \e[31m Could not set configuration %d for device %d-%d: %d \e[0m\n", devdesc.bNumConfigurations, bus, address, res);
 			libusb_close(handle);
 			return -1;
 		}
@@ -658,7 +662,9 @@ int set_config_ipod_Audio(int config_id)
 	libusb_device **devs;
 
 	cnt = libusb_get_device_list(NULL, &devs);
+
 	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] cnt:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, cnt);
+
 	if(cnt < 0) {
 		usbmuxd_log(LL_WARNING, "Could not get device list: %d", cnt);
 		devlist_failures++;
@@ -703,15 +709,15 @@ int usb_init(int config_id)
 	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t]  \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	res = libusb_init(NULL);
-
 	if(res != 0) {
+		//printf("## \e[31m PJSMSG  [%s():%s:%d\t] libusb_init failed: %d \e[0m\n", __func__, strrchr(__FILE__, '/')+1, __LINE__, res);
 		usbmuxd_log(LL_FATAL, "libusb_init failed: %d", res);
 		return -1;
 	}
 
 	collection_init(&device_list);
 
-	set_config_ipod_Audio(config_id);
+	res = set_config_ipod_Audio(config_id);
 	
 	return res;
 }

@@ -77,13 +77,14 @@ CNXUEventHandler::CNXUEventHandler()
 
 	if( gstpEventHandler == NULL )
 	{
-		printf("[CNXUEventHandler] thread start!!!\n");
 		if( 0 != pthread_create( &m_hUEventThread, NULL, UEventMonitorThreadStub, this ) )
 		{
 			//	ToDo Print Log
-			printf("[CNXUEventHandler] thread fail!!!\n");
+			ALOGD("[CNXUEventHandler] thread fail!!!\n");
 			return;
 		}
+
+		ALOGD("[CNXUEventHandler] thread start!!!\n");
 
 		if (stat(USB_IDVENDOR_PATH, &fst) == 0) 
 		{
@@ -104,7 +105,7 @@ CNXUEventHandler::CNXUEventHandler()
 			if(int_idVendor == VID_APPLE)
 				isIPOD = 1;
 
-			printf("[CNXUEventHandler] int_idVendor:0x%x, int_idProduct:0x%x, isIPOD:%d \n", int_idVendor, int_idProduct, isIPOD);
+			ALOGD("[CNXUEventHandler] int_idVendor:0x%x, int_idProduct:0x%x, isIPOD:%d \n", int_idVendor, int_idProduct, isIPOD);
 		}
 
 	}
@@ -156,8 +157,8 @@ void CNXUEventHandler::UEventMonitorThread()
 					if(int_idVendor == VID_APPLE)
 						isIPOD = 1;
 
-					printf("[CNXUEventHandler] Insert iPod.\n");
-					printf("[CNXUEventHandler] int_idVendor:0x%x, int_idProduct:0x%x, isIPOD:%d \n", int_idVendor, int_idProduct, isIPOD);
+					ALOGD("[CNXUEventHandler] Insert iPod.\n");
+					ALOGD("[CNXUEventHandler] int_idVendor:0x%x, int_idProduct:0x%x, isIPOD:%d \n", int_idVendor, int_idProduct, isIPOD);
 
 				 }
 				 if( !strcmp(m_Desc, IPOD_REMOVE_UEVENT_STRING) )
@@ -165,12 +166,12 @@ void CNXUEventHandler::UEventMonitorThread()
 					if(isIPOD)
 					{
 						isIPOD = 0;
-						printf("[CNXUEventHandler] Remove iPod.\n");
+						ALOGD("[CNXUEventHandler] Remove iPod.\n");
 						system("usbmuxdd -X");
 					}
 				 }
 
-				printf("[CNXUEventHandler] Descriptor: isIPOD:%d  %s\n", isIPOD, m_Desc);
+				ALOGD("[CNXUEventHandler] Descriptor: isIPOD:%d  %s\n", isIPOD, m_Desc);
 			}
 		}
 	}

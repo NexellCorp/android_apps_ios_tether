@@ -16,11 +16,7 @@ LOCAL_CFLAGS := -O2 -Wall -lpthread -DPACKAGE_STRING=\"1.0.9\" -DPACKAGE_VERSION
 
 LOCAL_SRC_FILES:= \
  $(LIB_ROOT_REL)/log.c \
- $(LIB_ROOT_REL)/client.c \
- $(LIB_ROOT_REL)/conf.c \
- $(LIB_ROOT_REL)/device.c \
  $(LIB_ROOT_REL)/main.c \
- $(LIB_ROOT_REL)/preflight.c \
  $(LIB_ROOT_REL)/usb.c \
  $(LIB_ROOT_REL)/utils.c
 
