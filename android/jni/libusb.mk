@@ -34,6 +34,7 @@ LOCAL_MODULE := libusb
 include $(BUILD_SHARED_LIBRARY)
 
 
+ifeq ($(NOT_BUILD),true)
 # listdevs
 
 include $(CLEAR_VARS)
@@ -51,3 +52,4 @@ LOCAL_SHARED_LIBRARIES := libusb
 LOCAL_MODULE:= listdevs
 
 include $(BUILD_EXECUTABLE)
+endif

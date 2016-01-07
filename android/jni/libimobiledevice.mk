@@ -70,7 +70,7 @@ LOCAL_MODULE := libimobiledevice
 
 include $(BUILD_SHARED_LIBRARY)
 
-
+ifeq ($(NOT_BUILD),true)
 #ideviceinfo
 
 include $(CLEAR_VARS)
@@ -285,3 +285,4 @@ LOCAL_SHARED_LIBRARIES := libimobiledevice libplist
 LOCAL_MODULE := idevicecrashreport
 
 include $(BUILD_EXECUTABLE)
+endif
