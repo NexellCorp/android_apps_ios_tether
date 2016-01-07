@@ -50,6 +50,7 @@
 #include "common/debug.h"
 #include "common/userpref.h"
 #include "common/utils.h"
+#include "common/log.h"
 #include "asprintf.h"
 
 #ifdef WIN32
@@ -431,6 +432,7 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_get_value(lockdownd_client_t cl
 	plist_t dict = NULL;
 	lockdownd_error_t ret = LOCKDOWN_E_UNKNOWN_ERROR;
 
+	DBGOUT("## [%s():%s:%d\t] domain:%s, key:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, domain, key);
 	/* setup request plist */
 	dict = plist_new_dict();
 	plist_dict_add_label(dict, client->label);
@@ -444,6 +446,7 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_get_value(lockdownd_client_t cl
 
 	/* send to device */
 	ret = lockdownd_send(client, dict);
+	DBGOUT("## [%s():%s:%d\t] lockdownd_send:ret:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, ret);
 
 	plist_free(dict);
 	dict = NULL;
@@ -453,10 +456,12 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_get_value(lockdownd_client_t cl
 
 	/* Now get device's answer */
 	ret = lockdownd_receive(client, &dict);
+	DBGOUT("## [%s():%s:%d\t] lockdownd_receive:ret:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, ret);
 	if (ret != LOCKDOWN_E_SUCCESS)
 		return ret;
 
 	ret = lockdown_check_result(dict, "GetValue");
+	DBGOUT("## [%s():%s:%d\t] lockdown_check_result:ret:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, ret);
 	if (ret == LOCKDOWN_E_SUCCESS) {
 		debug_info("success");
 	}
@@ -646,6 +651,8 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_client_new(idevice_t device, lo
 	};
 
 	property_list_service_client_t plistclient = NULL;
+	DBGOUT("## \e[31m[%s():%s:%d\t] \e[0mstart!!! label:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, label);
+
 	if (property_list_service_client_new(device, (lockdownd_service_descriptor_t)&service, &plistclient) != PROPERTY_LIST_SERVICE_E_SUCCESS) {
 		debug_info("could not connect to lockdownd (device %s)", device->udid);
 		return LOCKDOWN_E_MUX_ERROR;
@@ -664,6 +671,10 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_client_new(idevice_t device, lo
 	client_loc->label = label ? strdup(label) : NULL;
 
 	*client = client_loc;
+	DBGOUT("## [%s():%s:%d\t] session_id:%s  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, client_loc->session_id);
+	DBGOUT("## [%s():%s:%d\t] udid:%s  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, client_loc->udid);
+	DBGOUT("## [%s():%s:%d\t] label:%s  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, client_loc->label);
+	DBGOUT("## [%s():%s:%d\t] exit!!! \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	return LOCKDOWN_E_SUCCESS;
 }
@@ -764,6 +775,7 @@ static plist_t lockdownd_pair_record_to_plist(lockdownd_pair_record_t pair_recor
 {
 	if (!pair_record)
 		return NULL;
+	DBGOUT("## [%s():%s:%d\t]  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	/* setup request plist */
 	plist_t dict = plist_new_dict();
@@ -793,6 +805,7 @@ static lockdownd_error_t pair_record_generate(lockdownd_client_t client, plist_t
 	char* host_id = NULL;
 	char* system_buid = NULL;
 
+	DBGOUT("## [%s():%s:%d\t]  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 	/* retrieve device public key */
 	ret = lockdownd_get_device_public_key_as_key_data(client, &public_key);
 	if (ret != LOCKDOWN_E_SUCCESS) {
@@ -865,6 +878,8 @@ static lockdownd_error_t lockdownd_do_pair(lockdownd_client_t client, lockdownd_
 	plist_t pair_record_plist = NULL;
 	plist_t wifi_node = NULL;
 	int pairing_mode = 0; /* 0 = libimobiledevice, 1 = external */
+
+	usbmuxd_log(LL_NOTICE, "## [%s():%s:%d\t] \e[31mverb:%s\e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, verb);
 
 	if (pair_record && pair_record->system_buid && pair_record->host_id) {
 		/* valid pair_record passed? */
@@ -956,6 +971,7 @@ static lockdownd_error_t lockdownd_do_pair(lockdownd_client_t client, lockdownd_
 	/* if pairing succeeded */
 	if (ret == LOCKDOWN_E_SUCCESS) {
 		debug_info("%s success", verb);
+		usbmuxd_log(LL_NOTICE, "## [%s():%s:%d\t] \e[31mverb:%s success,\e[0m pairing_mode:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, verb, pairing_mode);
 		if (!pairing_mode) {
 			debug_info("internal pairing mode");
 			if (!strcmp("Unpair", verb)) {
@@ -1106,6 +1122,9 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_start_session(lockdownd_client_
 	property_list_service_error_t plret;
 	plist_t dict = NULL;
 
+	DBGOUT("## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+	DBGOUT("## [%s():%s:%d\t] session_id:%s, host_id:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, session_id, host_id);
+
 	if (!client || !host_id)
 		ret = LOCKDOWN_E_INVALID_ARG;
 
@@ -1212,6 +1231,7 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_start_session(lockdownd_client_
 static lockdownd_error_t lockdownd_build_start_service_request(lockdownd_client_t client, const char *identifier, int send_escrow_bag, plist_t *request)
 {
 	plist_t dict = plist_new_dict();
+	DBGOUT("## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	/* create the basic request params */
 	plist_dict_add_label(dict, client->label);
@@ -1263,6 +1283,8 @@ static lockdownd_error_t lockdownd_build_start_service_request(lockdownd_client_
  */
 static lockdownd_error_t lockdownd_do_start_service(lockdownd_client_t client, const char *identifier, int send_escrow_bag, lockdownd_service_descriptor_t *service)
 {
+	DBGOUT("## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+
 	if (!client || !identifier || !service)
 		return LOCKDOWN_E_INVALID_ARG;
 
@@ -1354,6 +1376,8 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_start_service_with_escrow_bag(l
 
 LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_activate(lockdownd_client_t client, plist_t activation_record)
 {
+	DBGOUT("## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+
 	if (!client)
 		return LOCKDOWN_E_INVALID_ARG;
 

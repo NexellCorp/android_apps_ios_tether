@@ -472,12 +472,27 @@ void plist_print_to_stream(plist_t plist, FILE* stream)
 
 	switch (plist_get_node_type(plist)) {
 	case PLIST_DICT:
+		DBGOUT("## [%s():%s:%d\t] PLIST_DICT \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 		plist_dict_print_to_stream(plist, &indent, stream);
 		break;
 	case PLIST_ARRAY:
+		DBGOUT("## [%s():%s:%d\t] PLIST_ARRAY \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 		plist_array_print_to_stream(plist, &indent, stream);
 		break;
 	default:
+		DBGOUT("## [%s():%s:%d\t] default \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 		plist_node_print_to_stream(plist, &indent, stream);
+	}
+}
+
+
+void get_tick_count(struct timeval * tv)
+{
+	struct timespec ts;
+	if(0 == clock_gettime(CLOCK_MONOTONIC, &ts)) {
+		tv->tv_sec = ts.tv_sec;
+		tv->tv_usec = ts.tv_nsec / 1000;
+	} else {
+		gettimeofday(tv, NULL);
 	}
 }

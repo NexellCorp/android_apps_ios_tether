@@ -190,4 +190,12 @@ int linux_get_device_address (struct libusb_context *ctx, int detached,
 int linux_enumerate_device(struct libusb_context *ctx,
 	uint8_t busnum, uint8_t devaddr, const char *sysfs_dir);
 
+//#define ENABLE_DEBUG
+
+#ifdef ENABLE_DEBUG
+#define DBGOUT(dev, fmt, arg...)		printf(dev, fmt, arg)
+#else
+#define DBGOUT(dev, fmt, arg...)		do {} while (0)
+#endif
+
 #endif

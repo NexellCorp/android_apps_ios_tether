@@ -226,6 +226,14 @@ void libusbmuxd_set_use_inotify(int set);
 
 void libusbmuxd_set_debug_level(int level);
 
+//#define ENABLE_DEBUG
+
+#ifdef ENABLE_DEBUG
+#define DBGOUT(dev, fmt, arg...)		printf(dev, fmt, arg)
+#else
+#define DBGOUT(dev, fmt, arg...)		do {} while (0)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -25,6 +25,9 @@
 #include <stdint.h>
 #include "utils.h"
 
+#define IPOD_DEVICE_STATE_FILE	"/var/lib/lockdown/ipod"
+#define IPOD_PAIR_STATE_FILE	"/var/lib/lockdown/pair"
+
 #define INTERFACE_CLASS 255
 #define INTERFACE_SUBCLASS 254
 #define INTERFACE_PROTOCOL 2
@@ -48,6 +51,9 @@
 #define PID_RANGE_MAX 0x12af
 
 struct usb_device;
+
+int ipod_usb_init(int config_id);
+void ipod_usb_shutdown(void);
 
 int usb_init(void);
 void usb_shutdown(void);

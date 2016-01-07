@@ -38,9 +38,9 @@
 #define DEBUG(...) __android_log_print(ANDROID_LOG_DEBUG, "usbmuxd", __VA_ARGS__)
 #endif
 
-unsigned int log_level = LL_WARNING;
+unsigned int log_level = LL_DEBUG;
 
-int log_syslog = 0;
+int log_syslog = 1;
 
 void log_enable_syslog()
 {

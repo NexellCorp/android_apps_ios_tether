@@ -43,6 +43,7 @@ LOCAL_SRC_FILES := \
  $(LIB_ROOT_REL)/common/socket.c \
  $(LIB_ROOT_REL)/common/thread.c \
  $(LIB_ROOT_REL)/common/utils.c \
+ $(LIB_ROOT_REL)/common/log.c
 
 LOCAL_C_INCLUDES += \
  $(LIB_ROOT_ABS) \

@@ -324,9 +324,6 @@ static int usb_device_add(libusb_device* dev)
 		printf( "Setting configuration for device %d-%d, from %d to %d \n", bus, address, current_config, devdesc.bNumConfigurations);
 
 		res = libusb_set_configuration(handle, devdesc.bNumConfigurations);
-		//res = libusb_set_configuration(handle, 2);
-		//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] libusb_set_configuration res:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, res);
-
 
 		if((res) != 0) {
 			printf( "Could not set configuration %d for device %d-%d: %d \n", devdesc.bNumConfigurations, bus, address, res);
@@ -385,24 +382,7 @@ static int usb_device_add(libusb_device* dev)
 
 	libusb_free_config_descriptor(config);
 
-	//libusb_device_handle *dev_handle = libusb_open_device_with_vid_pid(NULL, 0x05ac, 0x12ab);
-	//int claim = libusb_claim_interface(dev_handle, 0);
-	//printf( " claim:claim:claim:claim:claim:claim:claim:%d \n", claim);
-
-	//libusb_detach_kernel_driver()
-
-	//res = libusb_detach_kernel_driver(handle, 0);
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] libusb_detach_kernel_driver res:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, res);
-
 	res = libusb_detach_kernel_driver(handle, usbdev->interface);
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] libusb_detach_kernel_driver res:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, res);
-
-	//res = libusb_detach_kernel_driver(handle, 2);
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] libusb_detach_kernel_driver res:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, res);
-
-	//res = libusb_detach_kernel_driver(handle, 3);
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] libusb_detach_kernel_driver res:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, res);
-
 
 	if((res = libusb_claim_interface(handle, usbdev->interface)) != 0) {
 		usbmuxd_log(LL_WARNING, "Could not claim interface %d for device %d-%d: %d", usbdev->interface, bus, address, res);
@@ -641,6 +621,7 @@ int usb_process(void)
 {
 	int res;
 	struct timeval tv;
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 	tv.tv_sec = tv.tv_usec = 0;
 	res = libusb_handle_events_timeout(NULL, &tv);
 	if(res < 0) {
@@ -695,12 +676,17 @@ static libusb_hotplug_callback_handle usb_hotplug_cb_handle;
 static int usb_hotplug_cb(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data)
 {
 	if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
+		usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m event:LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+		buffer_write_to_filename(IPOD_DEVICE_STATE_FILE, "insert", sizeof(char)*6);
 		if (device_hotplug) {
 			usb_device_add(device);
 		}
 	} else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
 		uint8_t bus = libusb_get_bus_number(device);
 		uint8_t address = libusb_get_device_address(device);
+		usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m event:LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+		buffer_write_to_filename(IPOD_DEVICE_STATE_FILE, "remove", sizeof(char)*6);
+		buffer_write_to_filename(IPOD_PAIR_STATE_FILE, "unpair", sizeof(char)*6);
 		FOREACH(struct usb_device *usbdev, &device_list) {
 			if(usbdev->bus == bus && usbdev->address == address) {
 				usbdev->alive = 0;
@@ -757,7 +743,6 @@ int usb_init(void)
 void usb_shutdown(void)
 {
 	usbmuxd_log(LL_DEBUG, "usb_shutdown");
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t]  \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
 
 #ifdef HAVE_LIBUSB_HOTPLUG_API
 	libusb_hotplug_deregister_callback(NULL, usb_hotplug_cb_handle);
@@ -770,3 +755,159 @@ void usb_shutdown(void)
 	collection_free(&device_list);
 	libusb_exit(NULL);
 }
+
+
+
+static int ipod_set_config_usb_device(libusb_device* dev, int config_id)
+{
+	int j, res;
+	// the following are non-blocking operations on the device list
+	uint8_t bus = libusb_get_bus_number(dev);
+	uint8_t address = libusb_get_device_address(dev);
+	struct libusb_device_descriptor devdesc;
+	int found = 0;
+
+	FOREACH(struct usb_device *usbdev, &device_list) {
+		if(usbdev->bus == bus && usbdev->address == address) {
+			usbdev->alive = 1;
+			found = 1;
+			break;
+		}
+	} ENDFOREACH
+	if(found)
+		return 0; //device already found
+
+	if((res = libusb_get_device_descriptor(dev, &devdesc)) != 0) {
+		printf("## \e[31m Could not get device descriptor for device %d-%d: %d \e[0m\n", bus, address, res);
+		return -1;
+	}
+	if(devdesc.idVendor != VID_APPLE)
+		return -1;
+	if((devdesc.idProduct < PID_RANGE_LOW) ||
+		(devdesc.idProduct > PID_RANGE_MAX))
+		return -1;
+
+	libusb_device_handle *handle;
+	printf("##  Found new device with v/p %04x:%04x at %d-%d\n", devdesc.idVendor, devdesc.idProduct, bus, address);
+
+	if((res = libusb_open(dev, &handle)) != 0) {
+		printf("## \e[31m Could not open device %d-%d: %d\e[0m\n", bus, address, res);
+		return -1;
+	}
+
+	int current_config = 0;
+	if((res = libusb_get_configuration(handle, &current_config)) != 0) {
+		printf("## \e[31m Could not get configuration for device %d-%d: %d\e[0m\n", bus, address, res);
+		libusb_close(handle);
+		return -1;
+	}
+
+	printf("Configuration status. config_id:%d, current_config:%d \n", config_id, current_config);
+
+	if (config_id != current_config) 
+	{
+		struct libusb_config_descriptor *config;
+		if((res = libusb_get_active_config_descriptor(dev, &config)) != 0) {
+			usbmuxd_log(LL_NOTICE, "Could not get old configuration descriptor for device %d-%d: %d", bus, address, res);
+		} else {
+			for(j=0; j<config->bNumInterfaces; j++) {
+				const struct libusb_interface_descriptor *intf = &config->interface[j].altsetting[0];
+				if((res = libusb_kernel_driver_active(handle, intf->bInterfaceNumber)) < 0) {
+					usbmuxd_log(LL_NOTICE, "Could not check kernel ownership of interface %d for device %d-%d: %d", intf->bInterfaceNumber, bus, address, res);
+					continue;
+				}
+				if(res == 1) {
+					usbmuxd_log(LL_INFO, "Detaching kernel driver for device %d-%d, interface %d", bus, address, intf->bInterfaceNumber);
+					if((res = libusb_detach_kernel_driver(handle, intf->bInterfaceNumber)) < 0) {
+						usbmuxd_log(LL_WARNING, "Could not detach kernel driver (%d), configuration change will probably fail!", res);
+						continue;
+					}
+				}
+			}
+			libusb_free_config_descriptor(config);
+		}
+
+		printf( "Setting configuration for device %d-%d, from %d to %d \n", bus, address, current_config, config_id);
+
+		res = libusb_set_configuration(handle, config_id);
+
+		if((res) != 0) {
+			printf("## \e[31m Could not set configuration %d for device %d-%d: %d \e[0m\n", devdesc.bNumConfigurations, bus, address, res);
+			libusb_close(handle);
+			return -1;
+		}
+	}
+
+	libusb_close(handle);
+
+	return 0;
+}
+
+
+static int ipod_set_config(int config_id)
+{
+	int cnt, i;
+	int valid_count = 0;
+	libusb_device **devs;
+
+	cnt = libusb_get_device_list(NULL, &devs);
+
+	if(cnt < 0) {
+		usbmuxd_log(LL_WARNING, "Could not get device list: %d", cnt);
+		devlist_failures++;
+		// sometimes libusb fails getting the device list if you've just removed something
+		if(devlist_failures > 5) {
+			usbmuxd_log(LL_FATAL, "Too many errors getting device list");
+			return cnt;
+		} else {
+			return 0;
+		}
+	}
+	devlist_failures = 0;
+
+	usbmuxd_log(LL_SPEW, "usb_discover: scanning %d devices", cnt);
+
+	// Mark all devices as dead, and do a mark-sweep like
+	// collection of dead devices
+	FOREACH(struct usb_device *usbdev, &device_list) {
+		usbdev->alive = 0;
+	} ENDFOREACH
+
+	// Enumerate all USB devices and mark the ones we already know
+	// about as live, again
+	for(i=0; i<cnt; i++) {
+		libusb_device *dev = devs[i];
+		if (ipod_set_config_usb_device(dev, config_id) < 0) {
+			continue;
+		}
+		valid_count++;
+	}
+
+	libusb_free_device_list(devs, 1);
+
+
+	return valid_count;
+}
+
+int ipod_usb_init(int config_id)
+{
+	int res;
+	usbmuxd_log(LL_DEBUG, "ipod_usb_init for linux / libusb 1.0");
+	res = libusb_init(NULL);
+	if(res != 0) {
+		usbmuxd_log(LL_FATAL, "libusb_init failed: %d", res);
+		return -1;
+	}
+
+	collection_init(&device_list);
+	res = ipod_set_config(config_id);
+	return res;
+}
+
+void ipod_usb_shutdown(void)
+{
+	usbmuxd_log(LL_DEBUG, "ipod_usb_shutdown");
+	collection_free(&device_list);
+	libusb_exit(NULL);
+}
+

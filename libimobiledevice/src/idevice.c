@@ -60,13 +60,10 @@ static void locking_function(int mode, int n, const char* file, int line)
 		mutex_unlock(&mutex_buf[n]);
 }
 
-#ifndef __ANDROID__
 static unsigned long id_function(void)
 {
 	return ((unsigned long)THREAD_ID);
 }
-#endif
-
 #endif
 
 static void internal_idevice_init(void)
@@ -81,10 +78,7 @@ static void internal_idevice_init(void)
 	for (i = 0; i < CRYPTO_num_locks(); i++)
 		mutex_init(&mutex_buf[i]);
 
-#ifndef __ANDROID__
 	CRYPTO_set_id_callback(id_function);
-#endif
-
 	CRYPTO_set_locking_callback(locking_function);
 #else
 	gnutls_global_init();
@@ -96,9 +90,7 @@ static void internal_idevice_deinit(void)
 #ifdef HAVE_OPENSSL
 	int i;
 	if (mutex_buf) {
-#ifndef __ANDROID__
 		CRYPTO_set_id_callback(NULL);
-#endif
 		CRYPTO_set_locking_callback(NULL);
 		for (i = 0; i < CRYPTO_num_locks(); i++)
 			mutex_destroy(&mutex_buf[i]);
