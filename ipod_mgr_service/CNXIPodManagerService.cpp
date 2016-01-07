@@ -184,7 +184,7 @@ int32_t IIPodDeviceManagerService::ChangeMode( int32_t mode )
 
 				 if( !strncmp(PairString, "pair", sizeof((char *)"pair")) )
 				 {
-					system("echo 0 >/sys/class/ipheth/ipheth/regnetdev");
+					system("echo 0 >/sys/class/iOS/ipheth/regnetdev");
 					break;
 				 }
 				sleep(1);

@@ -712,7 +712,6 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 static void process_send(struct mux_client *client)
 {
 	int res;
-	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t]<<<<< \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 	if(!client->ob_size) {
 		usbmuxd_log(LL_WARNING, "Client %d OUT process but nothing to send?", client->fd);
 		client->events &= ~POLLOUT;
@@ -739,13 +738,11 @@ static void process_send(struct mux_client *client)
 		client->ob_size -= res;
 		memmove(client->ob_buf, client->ob_buf + res, client->ob_size);
 	}
-	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 }
 static void process_recv(struct mux_client *client)
 {
 	int res;
 	int did_read = 0;
-	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t]<<<<< \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 	if(client->ib_size < sizeof(struct usbmuxd_header)) {
 		res = recv(client->fd, client->ib_buf + client->ib_size, sizeof(struct usbmuxd_header) - client->ib_size, 0);
 		if(res <= 0) {
@@ -791,7 +788,6 @@ static void process_recv(struct mux_client *client)
 	}
 	client_command(client, hdr);
 	client->ib_size = 0;
-	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 }
 
 void client_process(int fd, short events)

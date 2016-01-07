@@ -621,7 +621,6 @@ int usb_process(void)
 {
 	int res;
 	struct timeval tv;
-	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 	tv.tv_sec = tv.tv_usec = 0;
 	res = libusb_handle_events_timeout(NULL, &tv);
 	if(res < 0) {
