@@ -40,8 +40,8 @@ using namespace android;
 #define USB_IDVENDOR_PATH	"/sys/devices/platform/nxp-ehci/usb2/2-1/idVendor"
 #define USB_IDPRODUCT_PATH	"/sys/devices/platform/nxp-ehci/usb2/2-1/idProduct"
 
-#define IPOD_INSERT_DEVICE_PATH "/var/lib/lockdown/ipod"
-#define IPOD_PAIR_PATH "/var/lib/lockdown/pair"
+#define IPOD_INSERT_DEVICE_PATH "/var/lib/ipod"
+#define IPOD_PAIR_PATH "/var/lib/pair"
 
 
 class CNXUEventHandler {

@@ -25,8 +25,8 @@
 #include <stdint.h>
 #include "utils.h"
 
-#define IPOD_DEVICE_STATE_FILE	"/var/lib/lockdown/ipod"
-#define IPOD_PAIR_STATE_FILE	"/var/lib/lockdown/pair"
+#define IPOD_DEVICE_STATE_FILE	"/var/lib/ipod"
+#define IPOD_PAIR_STATE_FILE	"/var/lib/pair"
 
 #define INTERFACE_CLASS 255
 #define INTERFACE_SUBCLASS 254
