@@ -5,6 +5,7 @@ LOCAL_MODULE := ipod_dev_mgr_server
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES :=  CNXIPodManagerService.cpp 	\
 			CNXUEventHandler.cpp	\
+			NX_CCpuInfo.cpp		\
 			main_server.cpp
 
 LOCAL_SHARED_LIBRARIES := libutils libcutils libbinder libhardware_legacy

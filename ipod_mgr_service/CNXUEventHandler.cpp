@@ -155,7 +155,15 @@ void CNXUEventHandler::UEventMonitorThread()
 					strcat(path, "/sys");
 					strcat(path, string);
 					ALOGD("[CNXUEventHandler] add@ : %s\n", path);
+
+					if( !strncmp(path, IPOD_CHANGE_IAP_DEVICE, strlen(IPOD_CHANGE_IAP_DEVICE)) )
+					{
+						ipod_mode = IPOD_MODE_IAP1;
+						continue;
+					}
+
 					strcat(path, "/idVendor");
+
 
 					if (stat(path, &fst) != 0)	continue;
 

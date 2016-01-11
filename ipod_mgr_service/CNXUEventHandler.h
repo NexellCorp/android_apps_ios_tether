@@ -43,6 +43,8 @@ using namespace android;
 #define IPOD_INSERT_DEVICE_PATH "/var/lib/ipod"
 #define IPOD_PAIR_PATH "/var/lib/pair"
 
+#define IPOD_CHANGE_IAP_DEVICE "/sys/class/iuihid"
+
 
 class CNXUEventHandler {
 public:
