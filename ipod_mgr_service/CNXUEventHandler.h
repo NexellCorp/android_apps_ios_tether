@@ -32,19 +32,42 @@
 
 using namespace android;
 
+#define VID_APPLE 0x5ac
+
+#define IPOD_INSERT_UEVENT_STRING	"add@/devices/platform/nxp-ehci/usb2/2-1"
+#define IPOD_REMOVE_UEVENT_STRING	"remove@/devices/platform/nxp-ehci/usb2/2-1"
+
+#define USB_IDVENDOR_PATH	"/sys/devices/platform/nxp-ehci/usb2/2-1/idVendor"
+#define USB_IDPRODUCT_PATH	"/sys/devices/platform/nxp-ehci/usb2/2-1/idProduct"
+
+#define IPOD_INSERT_DEVICE_PATH "/var/lib/ipod"
+#define IPOD_PAIR_PATH "/var/lib/pair"
+
 
 class CNXUEventHandler {
 public:
 	CNXUEventHandler();
 	virtual ~CNXUEventHandler();
+
+	int 	get_ipod_mode();
+	void 	set_ipod_mode(int mode);
 	int 	Get_isIPOD();
+	int		Write_String(char * path, char *buffer, int len);
+	int		Read_String(char * path, char *buffer, int len);
+
 private:
 	int			isIPOD;
+	int			ipod_mode;
 	char		m_Desc[4096];
+	char		m_path[4096];
 	pthread_t	m_hUEventThread;
 	static void	*UEventMonitorThreadStub( void * arg );
 	void		UEventMonitorThread();
-	int			Read_ID(char * path, char *buffer, int len);
+
+	pthread_t	m_hiPodPairThread;
+	static void	*iPodPairMonitorThreadStub( void * arg );
+	void		iPodPairMonitorThread();
+
 };
 
 void NX_StartUEventHandler();

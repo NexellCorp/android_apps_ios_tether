@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-
+#include "NXIPodDeviceManager.h"
 #include "CNXIPodManagerService.h"
 
 
@@ -39,7 +39,7 @@ int32_t BpIPodCtrl::ChangeMode( int32_t mode )
 	int32_t res;
 	data.writeInterfaceToken(IIPodDevMgr::getInterfaceDescriptor());
 	data.writeInt32(mode);
-	ALOGD("Client : mode = %d\n", mode);
+	ALOGD("Client : ChangeMode : mode = %d\n", mode);
 	remote()->transact(CHANGE_MODE, data, &reply);
 	status_t status = reply.readInt32(&res);
 	return res;
@@ -50,6 +50,7 @@ int32_t BpIPodCtrl::GetCurrentMode()
 	int32_t res;
 	remote()->transact(GET_MODE, data, &reply);
 	status_t status = reply.readInt32(&res);
+	ALOGD("Client : GetCurrentMode : res = %d\n", res);
 	return res;
 }
 
@@ -108,8 +109,20 @@ status_t BnIPodCtrl::onTransact(uint32_t code, const Parcel& data, Parcel* reply
 
 
 class IIPodDeviceManagerService : public BnIPodCtrl {
+private:
+	int			iPod_Tethering_mode;	// iPod tethering mode : 1
+
+public:
 	virtual int32_t ChangeMode( int32_t mode );
 	virtual int32_t GetCurrentMode();
+
+	//DECLARE_META_INTERFACE(IPodDeviceManagerService);  // Expands to 5 lines below:
+	//static const android::String16 descriptor;
+	//static android::sp<IIPodDevMgr> asInterface(const android::sp<android::IBinder>& obj);
+	//virtual const android::String16& getInterfaceDescriptor() const;
+	IIPodDeviceManagerService();
+	~IIPodDeviceManagerService();
+
 };
 
 #include <cutils/properties.h>
@@ -118,6 +131,16 @@ class IIPodDeviceManagerService : public BnIPodCtrl {
 static CNXUEventHandler *usbEventHandler = NULL;
 
 #define	IPOD_DEV_MODE_PROPERTY_NAME		"persist.nx.ipod.device.mode"
+
+IIPodDeviceManagerService::IIPodDeviceManagerService()
+	: iPod_Tethering_mode(IPOD_MODE_NO_DEVIDE)
+{
+}
+
+IIPodDeviceManagerService::~IIPodDeviceManagerService()
+{
+}
+
 int32_t IIPodDeviceManagerService::ChangeMode( int32_t mode )
 {
 	char value[PROPERTY_VALUE_MAX];
@@ -127,19 +150,45 @@ int32_t IIPodDeviceManagerService::ChangeMode( int32_t mode )
 
 	if(usbEventHandler->Get_isIPOD())
 	{
-		if(mode == 0)
+		if(mode == IPOD_MODE_IAP1)
 		{
-			ALOGD( "[IIPodDeviceManagerService] system(\"usbmuxdd -X\"); \n");
-			system("/system/bin/usbmuxdd -X");
-			sleep(2);
-			ALOGD( "[IIPodDeviceManagerService] system(\"usbAudio\"); \n");
-			system("/system/bin/usbAudio 2");
+			if(usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING)
+			{
+				ALOGD( "[IIPodDeviceManagerService] system(\"usbmuxdd -X\"); \n");
+				system("/system/bin/usbmuxdd -X");
+				sleep(2);
+			}
+			ALOGD( "[IIPodDeviceManagerService] system(\"usbmuxdd -a\"); \n");
+			usbEventHandler->set_ipod_mode(IPOD_MODE_IAP1);
+			system("/system/bin/usbmuxdd -a");
 		}
 
-		if(mode == 1)
+		if(mode == IPOD_MODE_TETHERING)
 		{
+			char PairString[20];
+			int ret = 0;
+
 			ALOGD( "[IIPodDeviceManagerService] system(\"usbmuxdd -v\"); \n");
+			usbEventHandler->set_ipod_mode(IPOD_MODE_TETHERING);
 			system("/system/bin/usbmuxdd -v");
+
+			while(1)
+			{
+				ret = usbEventHandler->Read_String((char *)IPOD_PAIR_PATH, (char *)PairString, 20);
+				ALOGD( "[IIPodDeviceManagerService] %s : %s \n", IPOD_PAIR_PATH, PairString);
+
+				if(ret < 0 || usbEventHandler->get_ipod_mode() == IPOD_MODE_NO_DEVIDE || usbEventHandler->Get_isIPOD() == 0)
+				{
+					break;
+				}
+
+				 if( !strncmp(PairString, "pair", sizeof((char *)"pair")) )
+				 {
+					system("echo 0 >/sys/class/iOS/ipheth/regnetdev");
+					break;
+				 }
+				sleep(1);
+			}
 		}
 	}
 
@@ -150,11 +199,11 @@ int32_t IIPodDeviceManagerService::ChangeMode( int32_t mode )
 
 int32_t IIPodDeviceManagerService::GetCurrentMode()
 {
-	int32_t ret;
-	ret = property_get_int32( IPOD_DEV_MODE_PROPERTY_NAME, 1 );		//	iAP1 Mode Default
-	ALOGD( "[IIPodDeviceManagerService] Server : GetCurrentMode (ret = %d)\n", ret );
+	int32_t ret = 0;
+	//ret = property_get_int32( IPOD_DEV_MODE_PROPERTY_NAME, 1 );		//	iAP1 Mode Default
+	ALOGD( "[IIPodDeviceManagerService] Server : GetCurrentMode (ret = %d)\n", usbEventHandler->get_ipod_mode());
 
-#if 0// PJSIN 20151223 add-- [ 1 
+#if 0 
 	if(usbEventHandler->Get_isIPOD())
 	{
 		if(ret == 0)
@@ -162,9 +211,9 @@ int32_t IIPodDeviceManagerService::GetCurrentMode()
 		if(ret == 1)
 			system("usbmuxdd -v");
 	}
-#endif// ]-- end 
+#endif 
 
-	return ret;
+	return usbEventHandler->get_ipod_mode();
 }
 
 
@@ -197,6 +246,9 @@ void StartIPodDeviceManagerService()
 	if( usbEventHandler == NULL )
 	{
 		usbEventHandler = new CNXUEventHandler();
+
+		usbEventHandler->Write_String((char *)IPOD_INSERT_DEVICE_PATH, (char *)"remove", sizeof(char)*6);
+		usbEventHandler->Write_String((char *)IPOD_PAIR_PATH, (char *)"unpair", sizeof(char)*6);
 	}
 
 	defaultServiceManager()->addService(String16(SERVICE_NAME), new IIPodDeviceManagerService());

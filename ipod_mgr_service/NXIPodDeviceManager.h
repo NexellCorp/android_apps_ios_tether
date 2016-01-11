@@ -32,9 +32,10 @@ enum {
 	ERR_BINDER_CON		= -1,		//	Binder Connection Error
 
 	//	iPod Device Mode
-	IPOD_MODE_DEFAULT	= 1,		//	Default iAP1 Mode
-	IPOD_MODE_IAP1 		= 1,
-	IPOD_MODE_TETHERING,
+	IPOD_MODE_DEFAULT	= 0,			//	Default Mode
+	IPOD_MODE_IAP1 		= 1,			//	iAP1 Mode
+	IPOD_MODE_TETHERING,			//	Tethering Mode
+	IPOD_MODE_NO_DEVIDE,			//	No device
 };
 
 //
