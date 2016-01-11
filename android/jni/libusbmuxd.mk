@@ -25,30 +25,33 @@ LOCAL_C_INCLUDES += \
  $(LIB_ROOT_ABS)/../$(LIB_PLIST_VERSION)/include 
   
 LOCAL_SHARED_LIBRARIES := libc libplist
-LOCAL_LDLIBS := -llog
+
+# LOCAL_LDLIBS := -llog
 
 LOCAL_MODULE := libusbmuxd
 
 include $(BUILD_SHARED_LIBRARY)
 
 
+ifeq ($(NOT_BUILD),true)
 #iproxy
 
-#include $(CLEAR_VARS)
+include $(CLEAR_VARS)
 
-#LOCAL_CFLAGS := -O2 -Wall -rdynamic -D__ANDROID__ 
+LOCAL_CFLAGS := -O2 -Wall -rdynamic -D__ANDROID__ 
 
-#LOCAL_SRC_FILES:= \
+LOCAL_SRC_FILES:= \
  $(LIB_ROOT_REL)/tools/iproxy.c
 
-#LOCAL_C_INCLUDES += \
+LOCAL_C_INCLUDES += \
  $(LIB_ROOT_ABS)/../../usbmuxd/out/toolchain/sysroot/usr/include \
  $(LIB_ROOT_ABS)/../../usbmuxd/out/toolchain/include/c++/4.8 \
  $(LIB_ROOT_ABS)/include \
  $(LIB_ROOT_ABS)/src
 
-#LOCAL_SHARED_LIBRARIES := libc libusbmuxd
+LOCAL_SHARED_LIBRARIES := libc libusbmuxd
 
-#LOCAL_MODULE:= iproxy
+LOCAL_MODULE:= iproxy
 
-#include $(BUILD_EXECUTABLE)
+include $(BUILD_EXECUTABLE)
+endif

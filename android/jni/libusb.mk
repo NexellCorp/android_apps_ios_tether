@@ -27,13 +27,14 @@ LOCAL_C_INCLUDES += \
  $(LIB_ROOT_ABS)/libusb/os \
  $(LIB_ROOT_ABS)/android
 
-LOCAL_LDLIBS := -llog
+# LOCAL_LDLIBS := -llog
 
 LOCAL_MODULE := libusb
 
 include $(BUILD_SHARED_LIBRARY)
 
 
+ifeq ($(NOT_BUILD),true)
 # listdevs
 
 include $(CLEAR_VARS)
@@ -51,3 +52,4 @@ LOCAL_SHARED_LIBRARIES := libusb
 LOCAL_MODULE:= listdevs
 
 include $(BUILD_EXECUTABLE)
+endif

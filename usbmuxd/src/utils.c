@@ -218,6 +218,7 @@ void buffer_read_from_filename(const char *filename, char **buffer, uint64_t *le
 
 	*length = 0;
 
+	usbmuxd_log(LL_NOTICE, "## [%s():%s:%d\t] filename:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, filename);
 	f = fopen(filename, "rb");
 	if (!f) {
 		return;
@@ -245,6 +246,7 @@ void buffer_write_to_filename(const char *filename, const char *buffer, uint64_t
 {
 	FILE *f;
 
+	usbmuxd_log(LL_NOTICE, "## [%s():%s:%d\t] filename:%s, buffer:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, filename, buffer);
 	f = fopen(filename, "wb");
 	if (f) {
 		fwrite(buffer, sizeof(char), length, f);
@@ -257,6 +259,7 @@ int plist_read_from_filename(plist_t *plist, const char *filename)
 	char *buffer = NULL;
 	uint64_t length;
 
+	usbmuxd_log(LL_NOTICE, "## [%s():%s:%d\t] filename:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, filename);
 	if (!filename)
 		return 0;
 
@@ -282,6 +285,7 @@ int plist_write_to_filename(plist_t plist, const char *filename, enum plist_form
 	char *buffer = NULL;
 	uint32_t length;
 
+	usbmuxd_log(LL_NOTICE, "## [%s():%s:%d\t] filename:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, filename);
 	if (!plist || !filename)
 		return 0;
 

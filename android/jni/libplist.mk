@@ -66,11 +66,12 @@ LOCAL_MODULE := libplist
 include $(BUILD_SHARED_LIBRARY)
 
 
+ifeq ($(NOT_BUILD),true)
 #libplist++
 
-#include $(CLEAR_VARS)
+include $(CLEAR_VARS)
 
-#LOCAL_SRC_FILES := \
+LOCAL_SRC_FILES := \
  $(LIB_ROOT_REL)/src/Node.cpp \
  $(LIB_ROOT_REL)/src/Boolean.cpp \
  $(LIB_ROOT_REL)/src/Integer.cpp \
@@ -84,7 +85,7 @@ include $(BUILD_SHARED_LIBRARY)
  $(LIB_ROOT_REL)/src/Array.cpp \
  $(LIB_ROOT_REL)/src/Dictionary.cpp
 
-#LOCAL_C_INCLUDES := \
+LOCAL_C_INCLUDES := \
  $(LIB_ROOT_ABS)/src \
  $(LIB_ROOT_ABS)/include \
  $(LIB_ROOT_ABS)/libcnary/include \
@@ -98,14 +99,15 @@ include $(BUILD_SHARED_LIBRARY)
  $(LIB_ROOT_ABS)/../$(LIB_ICONV_VERSION)/libcharset \
  $(LIB_ROOT_ABS)/../$(LIB_ICONV_VERSION)/libcharset/include
 
-#LOCAL_STATIC_LIBRARIES := libcnary
-#LOCAL_SHARED_LIBRARIES := libiconv libxml2 libplist
+LOCAL_STATIC_LIBRARIES := libcnary
+LOCAL_SHARED_LIBRARIES := libiconv libxml2 libplist
 
-#LOCAL_MODULE := libplist++
+LOCAL_MODULE := libplist++
 
-#include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
+endif
 
-
+ifeq ($(NOT_BUILD),true)
 #plistutil
 
 include $(CLEAR_VARS)
@@ -135,3 +137,4 @@ LOCAL_SHARED_LIBRARIES := libiconv libxml2 libplist
 LOCAL_MODULE := plistutil
 
 include $(BUILD_EXECUTABLE)
+endif

@@ -251,6 +251,14 @@ idevice_error_t idevice_get_handle(idevice_t device, uint32_t *handle);
  */
 idevice_error_t idevice_get_udid(idevice_t device, char **udid);
 
+//#define ENABLE_DEBUG
+
+#ifdef ENABLE_DEBUG
+#define DBGOUT(dev, fmt, arg...)		printf(dev, fmt, arg)
+#else
+#define DBGOUT(dev, fmt, arg...)		do {} while (0)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

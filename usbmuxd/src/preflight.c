@@ -85,6 +85,8 @@ static void np_callback(const char* notification, void* userdata)
 	lockdownd_client_t lockdown = NULL;
 	lockdownd_error_t lerr;
 
+	usbmuxd_log(LL_NOTICE, "## \e[31m[%s():%s:%d\t]\e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+
 	if (strlen(notification) == 0) {
 		cbdata->np = NULL;
 		return;
@@ -212,6 +214,7 @@ retry:
 	}
 
 	int version_major = strtol(version_str, NULL, 10);
+	usbmuxd_log(LL_INFO, "## [%s():%s:%d\t] version_major:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, version_major);
 	if (version_major >= 7) {
 		/* iOS 7.0 and later */
 		usbmuxd_log(LL_INFO, "%s: Found ProductVersion %s device %s", __func__, version_str, _dev->udid);
@@ -342,6 +345,7 @@ void preflight_worker_device_add(struct device_info* info)
 #ifdef HAVE_LIBIMOBILEDEVICE
 	struct device_info *infocopy = (struct device_info*)malloc(sizeof(struct device_info));
 
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 	memcpy(infocopy, info, sizeof(struct device_info));
 
 	pthread_t th;

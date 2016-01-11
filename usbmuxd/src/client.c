@@ -323,6 +323,8 @@ int client_notify_connect(struct mux_client *client, enum usbmuxd_result result)
 
 static plist_t create_device_attached_plist(struct device_info *dev)
 {
+	usbmuxd_log(LL_NOTICE, "## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+
 	plist_t dict = plist_new_dict();
 	plist_dict_set_item(dict, "MessageType", plist_new_string("Attached"));
 	plist_dict_set_item(dict, "DeviceID", plist_new_uint(dev->id));
@@ -405,6 +407,8 @@ static int send_pair_record(struct mux_client *client, uint32_t tag, const char*
 static int notify_device_add(struct mux_client *client, struct device_info *dev)
 {
 	int res = -1;
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m proto_version:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, client->proto_version);
+
 	if (client->proto_version == 1) {
 		/* XML plist packet */
 		plist_t dict = create_device_attached_plist(dev);
@@ -427,6 +431,8 @@ static int notify_device_add(struct mux_client *client, struct device_info *dev)
 static int notify_device_remove(struct mux_client *client, uint32_t device_id)
 {
 	int res = -1;
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m proto_version:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, client->proto_version);
+
 	if (client->proto_version == 1) {
 		/* XML plist packet */
 		plist_t dict = plist_new_dict();
@@ -478,6 +484,10 @@ static char* plist_dict_get_string_val(plist_t dict, const char* key)
 static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 {
 	int res;
+	DBGOUT("## \e[32m[%s():%s:%d\t]<<<<< \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+	DBGOUT("## [%s():%s:%d\t] Client command in fd:%d len:%d ver:%d msg:%d tag:%d state:%d  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__,
+																						client->fd, hdr->length, hdr->version, hdr->message, hdr->tag, client->state);
+
 	usbmuxd_log(LL_DEBUG, "Client command in fd %d len %d ver %d msg %d tag %d", client->fd, hdr->length, hdr->version, hdr->message, hdr->tag);
 
 	if(client->state != CLIENT_COMMAND) {
@@ -505,6 +515,9 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 			payload_size = hdr->length - sizeof(struct usbmuxd_header);
 			plist_t dict = NULL;
 			plist_from_xml(payload, payload_size, &dict);
+
+			usbmuxd_log(LL_INFO, "payload_size:%d, payload;\n%s \n", payload_size, payload);
+
 			if (!dict) {
 				usbmuxd_log(LL_ERROR, "Could not parse plist from payload!");
 				return -1;
@@ -517,19 +530,25 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 					return -1;
 				}
 				plist_get_string_val(node, &message);
+
+				usbmuxd_log(LL_INFO, "message:\e[31m%s\e[0m \n", message);
+
 				if (!message) {
 					usbmuxd_log(LL_ERROR, "Could not extract MessageType from plist!");
 					plist_free(dict);
 					return -1;
 				}
-				if (!strcmp(message, "Listen")) {
+				if (!strcmp(message, "Listen")) 
+				{
 					free(message);
 					plist_free(dict);
 					if (send_result(client, hdr->tag, 0) < 0)
 						return -1;
 					usbmuxd_log(LL_DEBUG, "Client %d now LISTENING", client->fd);
 					return start_listen(client);
-				} else if (!strcmp(message, "Connect")) {
+				} 
+				else if (!strcmp(message, "Connect")) 
+				{
 					uint64_t val;
 					uint16_t portnum = 0;
 					uint32_t device_id = 0;
@@ -572,19 +591,25 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 						client->state = CLIENT_CONNECTING1;
 					}
 					return 0;
-				} else if (!strcmp(message, "ListDevices")) {
+				}
+				else if (!strcmp(message, "ListDevices")) 
+				{
 					free(message);
 					plist_free(dict);
 					if (send_device_list(client, hdr->tag) < 0)
 						return -1;
 					return 0;
-				} else if (!strcmp(message, "ReadBUID")) {
+				} 
+				else if (!strcmp(message, "ReadBUID")) 
+				{
 					free(message);
 					plist_free(dict);
 					if (send_system_buid(client, hdr->tag) < 0)
 						return -1;
 					return 0;
-				} else if (!strcmp(message, "ReadPairRecord")) {
+				} 
+				else if (!strcmp(message, "ReadPairRecord")) 
+				{
 					free(message);
 					char* record_id = plist_dict_get_string_val(dict, "PairRecordID");
 					plist_free(dict);
@@ -595,7 +620,9 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 					if (res < 0)
 						return -1;
 					return 0;
-				} else if (!strcmp(message, "SavePairRecord")) {
+				} 
+				else if (!strcmp(message, "SavePairRecord")) 
+				{
 					uint32_t rval = RESULT_OK;
 					free(message);
 					char* record_id = plist_dict_get_string_val(dict, "PairRecordID");
@@ -609,6 +636,7 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 
 					if (record_id && record_data) {
 						res = config_set_device_record(record_id, record_data, record_size);
+						DBGOUT("## [%s():%s:%d\t] config_set_device_record:res:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, res);
 						if (res < 0) {
 							rval = -res;
 						}
@@ -616,10 +644,15 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 					} else {
 						rval = EINVAL;
 					}
+
+					buffer_write_to_filename(IPOD_PAIR_STATE_FILE, "pair", sizeof(char)*4);
+
 					if (send_result(client, hdr->tag, rval) < 0)
 						return -1;
 					return 0;
-				} else if (!strcmp(message, "DeletePairRecord")) {
+				} 
+				else if (!strcmp(message, "DeletePairRecord")) 
+				{
 					uint32_t rval = RESULT_OK;
 					free(message);
 					char* record_id = plist_dict_get_string_val(dict, "PairRecordID");
@@ -636,7 +669,9 @@ static int client_command(struct mux_client *client, struct usbmuxd_header *hdr)
 					if (send_result(client, hdr->tag, rval) < 0)
 						return -1;
 					return 0;
-				} else {
+				}
+				else 
+				{
 					usbmuxd_log(LL_ERROR, "Unexpected command '%s' received!", message);
 					free(message);
 					plist_free(dict);

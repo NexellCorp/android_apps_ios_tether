@@ -120,14 +120,13 @@ static usbmuxd_device_info_t *devices_find(uint32_t handle)
 static int connect_usbmuxd_socket()
 {
 	int ret;
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
 
 #if defined(WIN32) || defined(__CYGWIN__)
 	ret = socket_connect("127.0.0.1", USBMUXD_SOCKET_PORT);
 #else
 	ret = socket_connect_unix(USBMUXD_SOCKET_FILE);
 #endif
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] ret:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, ret);
+	DBGOUT("## [%s():%s:%d\t] ret:%d \n", __func__, strrchr(__FILE__, '/')+1, __LINE__, ret);
 	return ret;
 }
 
@@ -490,6 +489,8 @@ static int send_pair_record_packet(int sfd, uint32_t tag, const char* msgtype, c
 	}
 	
 	res = send_plist_packet(sfd, tag, plist);
+	DBGOUT("## [%s():%s:%d\t] res:%d \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, res);
+
 	plist_free(plist);
 
 	return res;
@@ -1211,6 +1212,8 @@ USBMUXD_API int usbmuxd_save_pair_record(const char* record_id, const char *reco
 	int sfd;
 	int tag;
 	int ret = -1;
+
+	DBGOUT("## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	if (!record_id || !record_data || !record_size) {
 		return -EINVAL;

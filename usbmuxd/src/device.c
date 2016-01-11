@@ -192,12 +192,15 @@ static int send_packet(struct mux_device *dev, enum mux_protocol proto, void *he
 
 	switch(proto) {
 		case MUX_PROTO_VERSION:
+			usbmuxd_log(LL_INFO, "## \e[33m[%s():%s:%d\t] MUX_PROTO_VERSION\e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 			hdrlen = sizeof(struct version_header);
 			break;
 		case MUX_PROTO_SETUP:
+			usbmuxd_log(LL_INFO, "## \e[33m[%s():%s:%d\t] MUX_PROTO_SETUP\e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 			hdrlen = 0;
 			break;
 		case MUX_PROTO_TCP:
+			usbmuxd_log(LL_INFO, "## \e[33m[%s():%s:%d\t] MUX_PROTO_TCP\e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 			hdrlen = sizeof(struct tcphdr);
 			break;
 		default:
@@ -462,7 +465,7 @@ void device_client_process(int device_id, struct mux_client *client, short event
 		usbmuxd_log(LL_WARNING, "Could not find connection for device %d client %p", device_id, client);
 		return;
 	}
-	usbmuxd_log(LL_SPEW, "device_client_process (%d)", events);
+	usbmuxd_log(LL_INFO, "device_client_process (%d)", events);
 
 	int res;
 	int size;
@@ -548,6 +551,8 @@ void device_abort_connect(int device_id, struct mux_client *client)
 
 static void device_version_input(struct mux_device *dev, struct version_header *vh)
 {
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+
 	if(dev->state != MUXDEV_INIT) {
 		usbmuxd_log(LL_WARNING, "Version packet from already initialized device %d", dev->id);
 		return;
@@ -625,6 +630,8 @@ static void device_tcp_input(struct mux_device *dev, struct tcphdr *th, unsigned
 	uint16_t sport = ntohs(th->th_dport);
 	uint16_t dport = ntohs(th->th_sport);
 	struct mux_connection *conn = NULL;
+
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	usbmuxd_log(LL_DEBUG, "[IN] dev=%d sport=%d dport=%d seq=%d ack=%d flags=0x%x window=%d[%d] len=%d",
 		dev->id, dport, sport, ntohl(th->th_seq), ntohl(th->th_ack), th->th_flags, ntohs(th->th_win) << 8, ntohs(th->th_win), payload_length);
@@ -714,6 +721,9 @@ void device_data_input(struct usb_device *usbdev, unsigned char *buffer, uint32_
 {
 	struct mux_device *dev = NULL;
 	pthread_mutex_lock(&device_list_mutex);
+
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m  \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+
 	FOREACH(struct mux_device *tdev, &device_list) {
 		if(tdev->usbdev == usbdev) {
 			dev = tdev;
@@ -783,6 +793,7 @@ void device_data_input(struct usb_device *usbdev, unsigned char *buffer, uint32_
 
 	switch(ntohl(mhdr->protocol)) {
 		case MUX_PROTO_VERSION:
+			usbmuxd_log(LL_INFO, "## [%s():%s:%d\t] MUX_PROTO_VERSION \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 			if(length < (mux_header_size + sizeof(struct version_header))) {
 				usbmuxd_log(LL_ERROR, "Incoming version packet is too small (%d)", length);
 				return;
@@ -790,11 +801,13 @@ void device_data_input(struct usb_device *usbdev, unsigned char *buffer, uint32_
 			device_version_input(dev, (struct version_header *)((char*)mhdr+mux_header_size));
 			break;
 		case MUX_PROTO_CONTROL:
+			usbmuxd_log(LL_INFO, "## [%s():%s:%d\t] MUX_PROTO_CONTROL \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 			payload = (unsigned char *)(mhdr+1);
 			payload_length = length - mux_header_size;
 			device_control_input(dev, payload, payload_length);
 			break;
 		case MUX_PROTO_TCP:
+			usbmuxd_log(LL_INFO, "## [%s():%s:%d\t] MUX_PROTO_TCP \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 			if(length < (mux_header_size + sizeof(struct tcphdr))) {
 				usbmuxd_log(LL_ERROR, "Incoming TCP packet is too small (%d)", length);
 				return;
@@ -816,7 +829,7 @@ int device_add(struct usb_device *usbdev)
 	int res;
 	int id = get_next_device_id();
 	struct mux_device *dev;
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m id:%d\n", __func__, strrchr(__FILE__, '/')+1, __LINE__, id);
 
 	usbmuxd_log(LL_NOTICE, "Connecting to new device on location 0x%x as ID %d", usb_get_location(usbdev), id);
 	dev = malloc(sizeof(struct mux_device));
@@ -846,7 +859,7 @@ int device_add(struct usb_device *usbdev)
 
 void device_remove(struct usb_device *usbdev)
 {
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t] \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
+	usbmuxd_log(LL_INFO, "## [%s():%s:%d\t] \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	pthread_mutex_lock(&device_list_mutex);
 	FOREACH(struct mux_device *dev, &device_list) {

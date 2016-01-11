@@ -89,4 +89,12 @@ int plist_write_to_filename(plist_t plist, const char *filename, enum plist_form
 uint64_t mstime64(void);
 void get_tick_count(struct timeval * tv);
 
+//#define ENABLE_DEBUG
+
+#ifdef ENABLE_DEBUG
+#define DBGOUT(dev, fmt, arg...)		printf(dev, fmt, arg)
+#else
+#define DBGOUT(dev, fmt, arg...)		do {} while (0)
+#endif
+
 #endif

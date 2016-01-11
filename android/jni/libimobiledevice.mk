@@ -3,7 +3,7 @@
 LIB_USBMUXD_VERSION:=usbmuxd
 LIB_PLIST_VERSION:=libplist
 LIB_LIBUSBMUXD_VERSION:=libusbmuxd
-LIB_OPENSSL_VERSION:=openssl-android/openssl
+LIB_OPENSSL_VERSION:=external/openssl/
 
 LIB_VERSION:=libimobiledevice
 
@@ -43,6 +43,7 @@ LOCAL_SRC_FILES := \
  $(LIB_ROOT_REL)/common/socket.c \
  $(LIB_ROOT_REL)/common/thread.c \
  $(LIB_ROOT_REL)/common/utils.c \
+ $(LIB_ROOT_REL)/common/log.c
 
 LOCAL_C_INCLUDES += \
  $(LIB_ROOT_ABS) \
@@ -55,21 +56,21 @@ LOCAL_C_INCLUDES += \
  $(LIB_ROOT_ABS)/../$(LIB_LIBUSBMUXD_VERSION)/include \
  $(LIB_ROOT_ABS)/../$(LIB_LIBUSBMUXD_VERSION)/src \
  $(LIB_ROOT_ABS)/../$(LIB_USBMUXD_VERSION)/src \
- $(LIB_ROOT_ABS)/../$(LIB_OPENSSL_VERSION) \
- $(LIB_ROOT_ABS)/../$(LIB_OPENSSL_VERSION)/include \
- $(LIB_ROOT_ABS)/../$(LIB_OPENSSL_VERSION)/ssl \
- $(LIB_ROOT_ABS)/../$(LIB_OPENSSL_VERSION)/apps \
- $(LIB_ROOT_ABS)/../$(LIB_OPENSSL_VERSION)/crypto
+ $(LIB_OPENSSL_VERSION) \
+ $(LIB_OPENSSL_VERSION)/include \
+ $(LIB_OPENSSL_VERSION)/ssl \
+ $(LIB_OPENSSL_VERSION)/apps \
+ $(LIB_OPENSSL_VERSION)/crypto
 
 LOCAL_SHARED_LIBRARIES := libusbmuxd libplist libssl libcrypto
-#libplist++ 
-LOCAL_LDLIBS := -llog
+
+#LOCAL_LDLIBS := -llog
 
 LOCAL_MODULE := libimobiledevice
 
 include $(BUILD_SHARED_LIBRARY)
 
-
+ifeq ($(NOT_BUILD),true)
 #ideviceinfo
 
 include $(CLEAR_VARS)
@@ -284,3 +285,4 @@ LOCAL_SHARED_LIBRARIES := libimobiledevice libplist
 LOCAL_MODULE := idevicecrashreport
 
 include $(BUILD_EXECUTABLE)
+endif

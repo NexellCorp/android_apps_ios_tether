@@ -2249,12 +2249,21 @@ static void usbi_log_str(struct libusb_context *ctx,
 #elif defined(__ANDROID__)
 	int priority = ANDROID_LOG_UNKNOWN;
 	switch (level) {
-	case LIBUSB_LOG_LEVEL_INFO: priority = ANDROID_LOG_INFO; break;
-	case LIBUSB_LOG_LEVEL_WARNING: priority = ANDROID_LOG_WARN; break;
-	case LIBUSB_LOG_LEVEL_ERROR: priority = ANDROID_LOG_ERROR; break;
-	case LIBUSB_LOG_LEVEL_DEBUG: priority = ANDROID_LOG_DEBUG; break;
+	case LIBUSB_LOG_LEVEL_INFO: priority = ANDROID_LOG_INFO; 
+		//ALOGI("libusb : %s", str);
+		break;
+	case LIBUSB_LOG_LEVEL_WARNING: priority = ANDROID_LOG_WARN; 
+		//ALOGW("libusb : %s", str);
+		break;
+	case LIBUSB_LOG_LEVEL_ERROR: priority = ANDROID_LOG_ERROR; 
+		//ALOGE("libusb : %s", str);
+		break;
+	case LIBUSB_LOG_LEVEL_DEBUG: priority = ANDROID_LOG_DEBUG; 
+		//ALOGD("libusb : %s", str);
+		break;
 	}
-	__android_log_write(priority, "libusb", str);
+	//__android_log_write(priority, "libusb", str);
+	
 #elif defined(HAVE_SYSLOG_FUNC)
 	int syslog_level = LOG_INFO;
 	switch (level) {

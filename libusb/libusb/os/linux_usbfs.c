@@ -2147,13 +2147,17 @@ static int op_submit_transfer(struct usbi_transfer *itransfer)
 
 	switch (transfer->type) {
 	case LIBUSB_TRANSFER_TYPE_CONTROL:
+		DBGOUT("## [%s():%s:%d\t] LIBUSB_TRANSFER_TYPE_CONTROL \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 		return submit_control_transfer(itransfer);
 	case LIBUSB_TRANSFER_TYPE_BULK:
 	case LIBUSB_TRANSFER_TYPE_BULK_STREAM:
+		DBGOUT("## [%s():%s:%d\t] LIBUSB_TRANSFER_TYPE_BULK \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 		return submit_bulk_transfer(itransfer);
 	case LIBUSB_TRANSFER_TYPE_INTERRUPT:
+		DBGOUT("## [%s():%s:%d\t] LIBUSB_TRANSFER_TYPE_INTERRUPT \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 		return submit_bulk_transfer(itransfer);
 	case LIBUSB_TRANSFER_TYPE_ISOCHRONOUS:
+		DBGOUT("## [%s():%s:%d\t] LIBUSB_TRANSFER_TYPE_ISOCHRONOUS \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 		return submit_iso_transfer(itransfer);
 	default:
 		usbi_err(TRANSFER_CTX(transfer),

@@ -36,7 +36,7 @@ LOCAL_C_INCLUDES += \
  $(LIB_ROOT_ABS)/../../usbmuxd/out/toolchain/include/c++/4.8
   
 LOCAL_SHARED_LIBRARIES := libc libplist libusbmuxd libusb libimobiledevice
-LOCAL_LDLIBS := -llog
+#LOCAL_LDLIBS := -llog
 
 LOCAL_MODULE:= usbmuxdd
 

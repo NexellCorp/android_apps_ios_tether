@@ -64,6 +64,7 @@ static int opt_enable_exit = 0;
 static int opt_exit = 0;
 static int exit_signal = 0;
 static int daemon_pipe;
+static int opt_ipod_audio = 0;
 
 static int report_to_parent = 0;
 
@@ -183,7 +184,7 @@ static int main_loop(int listenfd)
 	sigset_t empty_sigset;
 	sigemptyset(&empty_sigset); // unmask all signals
 
-	//printf("## \e[31m PJSMSG  \e[0m [%s():%s:%d\t] \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
 
 	fdlist_create(&pollfds);
 	while(!should_exit) {
@@ -379,6 +380,8 @@ static void usage()
 	printf("  -X, --force-exit\tNotify a running instance to exit even if there are still\n");
 	printf("                  \tdevices connected (always works) and exit.\n");
 	printf("  -V, --version\t\tPrint version information and exit.\n");
+
+	printf("  -a, --iPod-Audio\tChange iPod Audio and exit.\n");
 	printf("\n");
 }
 
@@ -400,16 +403,17 @@ static void parse_opts(int argc, char **argv)
 		{"exit", 0, NULL, 'x'},
 		{"force-exit", 0, NULL, 'X'},
 		{"version", 0, NULL, 'V'},
+		{"iPod-Audio", 0, NULL, 'a'},
 		{NULL, 0, NULL, 0}
 	};
 	int c;
 
 #ifdef HAVE_SYSTEMD
-	const char* opts_spec = "hfvVuU:xXsnz";
+	const char* opts_spec = "ahfvVuU:xXsnz";
 #elif HAVE_UDEV
-	const char* opts_spec = "hfvVuU:xXnz";
+	const char* opts_spec = "ahfvVuU:xXnz";
 #else
-	const char* opts_spec = "hfvVU:xXnz";
+	const char* opts_spec = "ahfvVU:xXnz";
 #endif
 
 	while (1) {
@@ -461,6 +465,9 @@ static void parse_opts(int argc, char **argv)
 			opt_exit = 1;
 			exit_signal = SIGTERM;
 			break;
+		case 'a':
+			opt_ipod_audio = 1;
+			break;
 		default:
 			usage();
 			exit(2);
@@ -476,11 +483,26 @@ int main(int argc, char *argv[])
 	struct flock lock;
 	char pids[10];
 
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t]  \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
+	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+
 	parse_opts(argc, argv);
 
 	argc -= optind;
 	argv += optind;
+
+	if(opt_ipod_audio)
+	{
+		usbmuxd_log(LL_INFO, "Initializing USB(opt_ipod_audio:%d)", opt_ipod_audio);
+		if((res = ipod_usb_init(2)) < 0)
+		{
+			usbmuxd_log(LL_INFO, "Initializing USB Fail!(opt_ipod_audio:%d)", opt_ipod_audio);
+			exit(1);
+		}
+		usbmuxd_log(LL_INFO, "%d device%s detected(opt_ipod_audio)", res, (res==1)?"":"s");
+		ipod_usb_shutdown();
+		usbmuxd_log(LL_NOTICE, "Shutdown complete(opt_ipod_audio)");
+		exit(0);
+	}
 
 	if (!foreground) {
 		verbose += LL_WARNING;
@@ -490,7 +512,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* set log level to specified verbosity */
-	log_level = verbose;
+	log_level = LL_DEBUG;//verbose;
 
 	usbmuxd_log(LL_NOTICE, "usbmuxd v%s starting up", PACKAGE_VERSION);
 	should_exit = 0;
@@ -597,6 +619,7 @@ int main(int argc, char *argv[])
 
 #ifdef HAVE_LIBIMOBILEDEVICE
 	const char* userprefdir = config_get_config_dir();
+	DBGOUT("## [%s():%s:%d\t] userprefdir:%s \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__, userprefdir);
 	struct stat fst;
 	memset(&fst, '\0', sizeof(struct stat));
 	if (stat(userprefdir, &fst) < 0) {
@@ -705,6 +728,9 @@ int main(int argc, char *argv[])
 	usb_shutdown();
 	device_shutdown();
 	client_shutdown();
+
+	buffer_write_to_filename(IPOD_PAIR_STATE_FILE, "unpair", sizeof(char)*6);
+
 	usbmuxd_log(LL_NOTICE, "Shutdown complete");
 
 terminate:
@@ -717,7 +743,6 @@ terminate:
 	if (report_to_parent)
 		notify_parent(res);
 
-	//printf("## \e[31m PJSMSG \e[0m [%s():%s:%d\t]  \n", __func__, strrchr(__FILE__, '/')+1, __LINE__);
-
-	return res;
+	usbmuxd_log(LL_NOTICE, "return %d;", res);
+	exit(0); // 	return res;
 }
