@@ -76,7 +76,7 @@ LOCAL_LDLIBS := \
 
 LOCAL_SHARED_LIBRARIES := libiconv libdl
 
-LOCAL_MODULE := libxml2
+LOCAL_MODULE := libxml2_ios
 
 include $(BUILD_SHARED_LIBRARY)
 

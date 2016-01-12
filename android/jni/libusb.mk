@@ -29,7 +29,7 @@ LOCAL_C_INCLUDES += \
 
 # LOCAL_LDLIBS := -llog
 
-LOCAL_MODULE := libusb
+LOCAL_MODULE := libusb_ios
 
 include $(BUILD_SHARED_LIBRARY)
 

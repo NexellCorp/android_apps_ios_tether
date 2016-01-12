@@ -59,7 +59,7 @@ LOCAL_C_INCLUDES := \
  $(LIB_ROOT_ABS)/../$(LIB_ICONV_VERSION)/libcharset/include
 
 LOCAL_STATIC_LIBRARIES := libcnary
-LOCAL_SHARED_LIBRARIES := libiconv libxml2
+LOCAL_SHARED_LIBRARIES := libiconv libxml2_ios
 
 LOCAL_MODULE := libplist
 
@@ -100,7 +100,7 @@ LOCAL_C_INCLUDES := \
  $(LIB_ROOT_ABS)/../$(LIB_ICONV_VERSION)/libcharset/include
 
 LOCAL_STATIC_LIBRARIES := libcnary
-LOCAL_SHARED_LIBRARIES := libiconv libxml2 libplist
+LOCAL_SHARED_LIBRARIES := libiconv libxml2_ios libplist
 
 LOCAL_MODULE := libplist++
 
@@ -132,7 +132,7 @@ LOCAL_C_INCLUDES := \
  $(LIB_ROOT_ABS)/../$(LIB_ICONV_VERSION)/libcharset/include
 
 LOCAL_STATIC_LIBRARIES := libcnary
-LOCAL_SHARED_LIBRARIES := libiconv libxml2 libplist
+LOCAL_SHARED_LIBRARIES := libiconv libxml2_ios libplist
 
 LOCAL_MODULE := plistutil
 
