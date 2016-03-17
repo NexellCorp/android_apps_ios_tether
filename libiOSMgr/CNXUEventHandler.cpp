@@ -40,39 +40,12 @@ CNXUEventHandler::CNXUEventHandler()
 	struct stat fst;
 	int ret = 0;
 
-	if( gstpEventHandler == NULL )
-	{
-		if( 0 != pthread_create( &m_hUEventThread, NULL, UEventMonitorThreadStub, this ) )
-		{
+	if (gstpEventHandler == NULL) {
+		if (0 != pthread_create( &m_hUEventThread, NULL, UEventMonitorThreadStub, this)) {
 			ALOGD("[CNXUEventHandler] UEventMonitor thread fail!!!\n");
 			return;
 		}
-
 		ALOGD("[CNXUEventHandler] UEventMonitor thread start!!!\n");
-
-#if 0
-		ret = libusbapi_init(libusbapi_hotplug_cb);
-		if( ret < 0)
-		{
-			ALOGD("[CNXUEventHandler] \e[31musb_init fail!!! : %d \e[0m\n", ret);
-		}
-		else
-			ALOGD("[CNXUEventHandler] libusbapi_init ok!!! : %d \n", ret);
-#endif
-
-
-#if 0
-		if( 0 != pthread_create( &m_hiPodPairThread, NULL, iPodPairMonitorThreadStub, this ) )
-		{
-			//	ToDo Print Log
-			ALOGD("[CNXUEventHandler] iPodPairMonitorThreadStub fail!!!\n");
-			return;
-		}
-
-		ALOGD("[CNXUEventHandler] iPodPairMonitor thread start!!!\n");
-#endif
-
-
 	}
 }
 
@@ -83,32 +56,32 @@ CNXUEventHandler::~CNXUEventHandler()
 void *CNXUEventHandler::UEventMonitorThreadStub(void *arg)
 {
 	CNXUEventHandler *pObj = (CNXUEventHandler*)arg;
+
 	pObj->UEventMonitorThread();
+
 	return (void*)0xDeadFace;
 }
 
 void CNXUEventHandler::UEventMonitorThread()
 {
 	struct pollfd fds;
+
 	ALOGD("[CNXUEventHandler] UEventMonitorThread() start\n");
 	uevent_init();
 	fds.fd		= uevent_get_fd();
 	fds.events	= POLLIN;
-	while( 1 )
-	{
+
+	while (1) {
 		int32_t err = poll( &fds, 1, 1000 );
-		if( err > 0 )
-		{ 
-			if( fds.revents & POLLIN )
-			{
+		if (err > 0) { 
+			if (fds.revents & POLLIN) {
 				int32_t len = uevent_next_event(m_Desc, sizeof(m_Desc)-1);
 
-				if( len < 1)	continue;
+				if (len < 1)	continue;
 
 				//ALOGD("[CNXUEventHandler] m_Desc : %s\n", m_Desc);
 
-				 if( !strncmp(m_Desc, "add@", strlen("add@")) )
-				 {
+				 if (!strncmp(m_Desc, "add@", strlen("add@"))) {
 					struct stat fst;
 					char idVendor[8];
 					char idProduct[8];
@@ -117,7 +90,6 @@ void CNXUEventHandler::UEventMonitorThread()
 					int ret;
 					char	*string;
 					char	path[4096];
-
 
 					string = strchr(m_Desc, '@');
 					string++;
@@ -138,7 +110,7 @@ void CNXUEventHandler::UEventMonitorThread()
 					if (stat(path, &fst) != 0)	continue;
 
 					ret = Read_String((char*)path, (char*)idVendor, 5);
-					if(ret < 0) 	continue;
+					if (ret < 0) 	continue;
 
 					memset(path, 0, 4096);
 					strcat(path, "/sys");
@@ -150,10 +122,9 @@ void CNXUEventHandler::UEventMonitorThread()
 					int_idVendor = strtol(idVendor, NULL, 16);
 					int_idProduct = strtol(idProduct, NULL, 16);
 
-					if((int_idVendor == VID_APPLE)
+					if ((int_idVendor == VID_APPLE)
 						&& ((int_idProduct & 0xff00)==PID_APPLE)
-						)
-					{
+						) {
 						isIPOD = 1;
 						//ipod_mode = IPOD_MODE_DEFAULT;
 						memcpy(m_path, string, strlen(string));
@@ -165,8 +136,7 @@ void CNXUEventHandler::UEventMonitorThread()
 					ALOGD("[CNXUEventHandler] int_idVendor:0x%x, int_idProduct:0x%x:0x%x, isIPOD:%d \n", int_idVendor, int_idProduct, (int_idProduct & 0xff00), isIPOD);
 				 }
 
-				 if( !strncmp(m_Desc, "remove@", strlen("remove@")) )
-				 {
+				 if (!strncmp(m_Desc, "remove@", strlen("remove@"))) {
 					char	*string;
 
 					string = strchr(m_Desc, '@');
@@ -174,10 +144,8 @@ void CNXUEventHandler::UEventMonitorThread()
 
 					ALOGD("[CNXUEventHandler] remove@ : %s\n", string);
 
-					 if( !strcmp(m_path, string) )
-				 	{
-						if(isIPOD)
-						{
+					 if (!strcmp(m_path, string)) {
+						if (isIPOD) {
 							isIPOD = 0;
 							ALOGD("[CNXUEventHandler] Remove iPod.\n");
 
@@ -190,7 +158,6 @@ void CNXUEventHandler::UEventMonitorThread()
 						}
 					 }
 				 }
-
 			}
 		}
 	}
@@ -200,24 +167,24 @@ void CNXUEventHandler::UEventMonitorThread()
 void *CNXUEventHandler::iPodPairMonitorThreadStub(void *arg)
 {
 	CNXUEventHandler *pObj = (CNXUEventHandler*)arg;
+
 	pObj->iPodPairMonitorThread();
+
 	return (void*)0xDeadFace;
 }
 
 void CNXUEventHandler::iPodPairMonitorThread()
 {
 	struct pollfd fds;
+
 	ALOGD("[CNXUEventHandler] iPodPairMonitorThread() start\n");
 	fds.fd		= open(IPOD_PAIR_PATH, O_RDONLY | O_NONBLOCK);
 	fds.events	= POLLIN;
 
-	while( 1 )
-	{
+	while (1)	 {
 		int32_t err = poll( &fds, 1, 1000000);
-		if( err > 0 )
-		{ 
-			if( fds.revents & POLLIN )
-			{
+		if (err > 0) { 
+			if (fds.revents & POLLIN) {
 				char PairString[20];
 				int ret;
 
@@ -255,12 +222,10 @@ int CNXUEventHandler::Write_String(char * path, char *buffer, int len)
 	int ret = 0;
 
 	fd = fopen(( char * )path, "wb");
-	if (fd) {
+	if  (fd) {
 		fwrite(buffer, sizeof(char), len, fd);
 		fclose(fd);
-	}
-	else
-	{
+	} else {
 		ALOGD("[CNXUEventHandler] Write_String() %s: Open Fail!! \n", path);
 		ret = -1;
 	}
@@ -273,13 +238,10 @@ int CNXUEventHandler::Read_String(char * path, char *buffer, int len)
 	FILE *fd = NULL;
 	int ret = 0;
 
-	if ( ( fd = fopen( ( char * ) path, "r" ) ) != NULL ) 
-	{
+	if (( fd = fopen( ( char * ) path, "r" ) ) != NULL )  {
 		fgets( ( char * ) buffer, len, fd );
 		fclose( fd );
-	}
-	else
-	{
+	} else {
 		ALOGD("[CNXUEventHandler] Read_String() %s: Open Fail!! \n", path);
 		ret = -1;
 	}

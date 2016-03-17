@@ -64,7 +64,7 @@ static int opt_enable_exit = 0;
 static int opt_exit = 0;
 static int exit_signal = 0;
 static int daemon_pipe;
-static int opt_ipod_audio = 0;
+static int opt_ios_usb_con = 10;
 
 static int report_to_parent = 0;
 
@@ -381,7 +381,8 @@ static void usage()
 	printf("                  \tdevices connected (always works) and exit.\n");
 	printf("  -V, --version\t\tPrint version information and exit.\n");
 
-	printf("  -a, --iPod-Audio\tChange iPod Audio and exit.\n");
+	printf("  -a, --iOS-Audio\tChange iOS Audio and exit.\n");
+	printf("  -d, --iOS-Default\tChange iOS Default and exit.\n");
 	printf("\n");
 }
 
@@ -403,17 +404,18 @@ static void parse_opts(int argc, char **argv)
 		{"exit", 0, NULL, 'x'},
 		{"force-exit", 0, NULL, 'X'},
 		{"version", 0, NULL, 'V'},
-		{"iPod-Audio", 0, NULL, 'a'},
+		{"iOS-Audio", 0, NULL, 'a'},
+		{"iOS-Default", 0, NULL, 'd'},
 		{NULL, 0, NULL, 0}
 	};
 	int c;
 
 #ifdef HAVE_SYSTEMD
-	const char* opts_spec = "ahfvVuU:xXsnz";
+	const char* opts_spec = "acdhfvVuU:xXsnz";
 #elif HAVE_UDEV
-	const char* opts_spec = "ahfvVuU:xXnz";
+	const char* opts_spec = "acdhfvVuU:xXnz";
 #else
-	const char* opts_spec = "ahfvVU:xXnz";
+	const char* opts_spec = "acdhfvVU:xXnz";
 #endif
 
 	while (1) {
@@ -466,7 +468,10 @@ static void parse_opts(int argc, char **argv)
 			exit_signal = SIGTERM;
 			break;
 		case 'a':
-			opt_ipod_audio = 1;
+			opt_ios_usb_con = 2;
+			break;
+		case 'd':
+			opt_ios_usb_con = 0;
 			break;
 		default:
 			usage();
@@ -484,23 +489,24 @@ int main(int argc, char *argv[])
 	char pids[10];
 
 	usbmuxd_log(LL_INFO, "## \e[31m[%s():%s:%d\t] \e[0m \n", __FUNCTION__, strrchr(__FILE__, '/')+1, __LINE__);
+	opt_ios_usb_con = 10;
 
 	parse_opts(argc, argv);
 
 	argc -= optind;
 	argv += optind;
 
-	if(opt_ipod_audio)
-	{
-		usbmuxd_log(LL_INFO, "Initializing USB(opt_ipod_audio:%d)", opt_ipod_audio);
-		if((res = ipod_usb_init(2)) < 0)
-		{
-			usbmuxd_log(LL_INFO, "Initializing USB Fail!(opt_ipod_audio:%d)", opt_ipod_audio);
+	if (opt_ios_usb_con != 10) {
+		usbmuxd_log(LL_INFO, "Initializing USB(opt_ios_usb_con:%d)", opt_ios_usb_con);
+		if ((res = ipod_usb_init(opt_ios_usb_con)) < 0) {
+			usbmuxd_log(LL_INFO, "Initializing USB Fail!(opt_ios_usb_con:%d)", opt_ios_usb_con);
+			opt_ios_usb_con = 10;
 			exit(1);
 		}
-		usbmuxd_log(LL_INFO, "%d device%s detected(opt_ipod_audio)", res, (res==1)?"":"s");
+		usbmuxd_log(LL_INFO, "%d device%s detected(opt_ios_usb_con)", res, (res==1)?"":"s");
 		ipod_usb_shutdown();
-		usbmuxd_log(LL_NOTICE, "Shutdown complete(opt_ipod_audio)");
+		usbmuxd_log(LL_NOTICE, "Shutdown complete(opt_ios_usb_con)");
+		opt_ios_usb_con = 10;
 		exit(0);
 	}
 

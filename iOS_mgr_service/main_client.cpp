@@ -20,7 +20,9 @@ int main( int argc, char *argv[] )
 	switch(num)
 	{
 		case 1:
-			if(mode == IPOD_MODE_IAP1)
+			if(mode == IPOD_MODE_DEFAULT)
+				ALOGD("Client : Call : NX_IPodChangeMode( IPOD_MODE_DEFAULT ), Ret = %d\n", NX_IPodChangeMode( IPOD_MODE_DEFAULT ));
+			else if(mode == IPOD_MODE_IAP1)
 				ALOGD("Client : Call : NX_IPodChangeMode( IPOD_MODE_IAP1 ), Ret = %d\n", NX_IPodChangeMode( IPOD_MODE_IAP1 ));
 			else if(mode == IPOD_MODE_IAP2)
 				ALOGD("Client : Call : NX_IPodChangeMode( IPOD_MODE_IAP2 ), Ret = %d\n", NX_IPodChangeMode( IPOD_MODE_IAP2 ));

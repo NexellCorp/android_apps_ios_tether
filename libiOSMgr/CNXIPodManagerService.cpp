@@ -48,20 +48,24 @@ int32_t BpIPodCtrl::ChangeMode( int32_t mode )
 {
 	Parcel data, reply;
 	int32_t res;
+
 	data.writeInterfaceToken(IIPodDevMgr::getInterfaceDescriptor());
 	data.writeInt32(mode);
 	ALOGD("Client : ChangeMode : mode = %d\n", mode);
 	remote()->transact(CHANGE_MODE, data, &reply);
 	status_t status = reply.readInt32(&res);
+
 	return res;
 }
 int32_t BpIPodCtrl::GetCurrentMode()
 {
 	Parcel data, reply;
 	int32_t res;
+
 	remote()->transact(GET_MODE, data, &reply);
 	status_t status = reply.readInt32(&res);
 	ALOGD("Client : GetCurrentMode : res = %d\n", res);
+
 	return res;
 }
 
@@ -76,6 +80,7 @@ const android::String16& IIPodDevMgr::getInterfaceDescriptor() const {
 android::sp<IIPodDevMgr> IIPodDevMgr::asInterface(const android::sp<android::IBinder>& obj) 
 {
 	android::sp<IIPodDevMgr> intr;
+
 	if (obj != NULL) {
 		intr = static_cast<IIPodDevMgr*>(obj->queryLocalInterface(IIPodDevMgr::descriptor).get());
 		if (intr == NULL) {
@@ -99,22 +104,23 @@ class BnIPodCtrl : public BnInterface<IIPodDevMgr> {
 
 status_t BnIPodCtrl::onTransact(uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
+	int32_t mode = 0;
+
 	ALOGD("BnIPodCtrl::onTransact(%i) %i", code, flags);
 	data.checkInterface(this);
-	switch(code)
-	{
-		case CHANGE_MODE:
-		{
-			int32_t mode = 0;
-			data.readInt32(&mode);
-			reply->writeInt32(ChangeMode(mode));
-			return NO_ERROR;
-		}
-		case GET_MODE:
-			reply->writeInt32(GetCurrentMode());
-			return NO_ERROR;
-		default:
-			return BBinder::onTransact(code, data, reply, flags);
+
+	switch (code) {
+	case CHANGE_MODE:
+		data.readInt32(&mode);
+		reply->writeInt32(ChangeMode(mode));
+		return NO_ERROR;
+
+	case GET_MODE:
+		reply->writeInt32(GetCurrentMode());
+		return NO_ERROR;
+
+	default:
+		return BBinder::onTransact(code, data, reply, flags);
 	}
 }
 
@@ -159,18 +165,11 @@ void *IIPodDeviceManagerService::Mode_Change_Thread(void *arg)
 	ALOGD( "[CNXIPodDeviceManagerService] Mode_Change_Thread()  \n");
 
 	ret1 = property_get_int32( IPOD_DEV_MODE_PROPERTY_NAME, 1 );
-	if (pObj->m_mode == 10)
-	{
-		if(ret1 == 1
-			|| ret1 == 2
-			|| ret1 == 3)
-		{
+	if (pObj->m_mode == 10) {
+		if (ret1  <= 3)
 			pObj->m_mode = ret1;
-		}
 		else
-		{
-			pObj->m_mode = 1;
-		}
+			pObj->m_mode = 0;
 	}
 
 	sprintf( value, "%d", pObj->m_mode );
@@ -179,10 +178,22 @@ void *IIPodDeviceManagerService::Mode_Change_Thread(void *arg)
 	 ret = property_set(IPOD_DEV_MODE_PROPERTY_NAME, value );
 	ALOGD( "[CNXIPodDeviceManagerService] property_set:%s, value:%s, ret:%d \n", IPOD_DEV_MODE_PROPERTY_NAME, value, ret);
 	
-	if(usbEventHandler->Get_isIPOD())
-	{
-		if(pObj->m_mode == IPOD_MODE_IAP1)
-		{
+	if (usbEventHandler->Get_isIPOD()) {
+		if (pObj->m_mode == IPOD_MODE_DEFAULT) {
+			//if(usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING
+			//	|| usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING_CHANGING)
+			{
+				ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -X\"); \n");
+				system("/system/bin/usbmuxdd -X");
+				sleep(2);
+			}
+
+			ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -d\"); \n");
+			system("/system/bin/usbmuxdd -d");
+			usbEventHandler->set_ipod_mode(IPOD_MODE_DEFAULT);
+		}
+
+		if (pObj->m_mode == IPOD_MODE_IAP1) {
 			//if(usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING
 			//	|| usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING_CHANGING)
 			{
@@ -196,8 +207,7 @@ void *IIPodDeviceManagerService::Mode_Change_Thread(void *arg)
 			usbEventHandler->set_ipod_mode(IPOD_MODE_IAP1);
 		}
 
-		if(pObj->m_mode == IPOD_MODE_IAP2)
-		{
+		if (pObj->m_mode == IPOD_MODE_IAP2) {
 			//if(usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING
 			//	|| usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING_CHANGING)
 			{
@@ -208,8 +218,7 @@ void *IIPodDeviceManagerService::Mode_Change_Thread(void *arg)
 			usbEventHandler->set_ipod_mode(IPOD_MODE_IAP2);
 		}
 
-		if(pObj->m_mode == IPOD_MODE_TETHERING)
-		{
+		if (pObj->m_mode == IPOD_MODE_TETHERING) {
 			static int cnt = 0;
 			char PairString[20];
 			int ret = 0;
@@ -218,39 +227,35 @@ void *IIPodDeviceManagerService::Mode_Change_Thread(void *arg)
 			ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -v\"); \n");
 			system("/system/bin/usbmuxdd -v");
 
-			while(1)
-			{
+			while (1) {
 				ret = usbEventHandler->Read_String((char *)IPOD_PAIR_PATH, (char *)PairString, 20);
 				ALOGD( "[CNXIPodDeviceManagerService] %s : %s \n", IPOD_PAIR_PATH, PairString);
 
-				 if( !strncmp(PairString, "pair", sizeof((char *)"pair")) )
-				 {
+				 if ( !strncmp(PairString, "pair", sizeof((char *)"pair")) ) {
 					system("echo 0 >/sys/class/iOS/ipheth/regnetdev");
 					usbEventHandler->set_ipod_mode(IPOD_MODE_TETHERING);
 					break;
 				 }
 				sleep(1);
 
-				if(ret < 0 
+				if (ret < 0 
+					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_DEFAULT
 					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_IAP1
 					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_IAP2
 					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_NO_DEVIDE 
-					|| usbEventHandler->Get_isIPOD() == 0)
-				{
+					|| usbEventHandler->Get_isIPOD() == 0) {
 					break;
 				}
 
-				if(cnt ==2 )
-				{
+				if (cnt ==2 ) {
 					usbEventHandler->set_ipod_mode(IPOD_MODE_TETHERING);
 				}
-				if(cnt < 5);	cnt ++ ;
+
+				if (cnt < 5);	cnt ++ ;
 
 			}
 		}
-	}
-	else
-	{
+	} else {
 		usbEventHandler->set_ipod_mode(IPOD_MODE_NO_DEVIDE);
 	}
 
@@ -261,24 +266,21 @@ int32_t IIPodDeviceManagerService::ChangeMode( int32_t mode )
 {
 	pthread_t		m_Mode_Change_Thread;
 
-	if(usbEventHandler->get_ipod_mode() == IPOD_MODE_CHANGING)
-	{
+	if (usbEventHandler->get_ipod_mode() == IPOD_MODE_CHANGING) {
 		return usbEventHandler->get_ipod_mode();
 	}
 
 	usbEventHandler->set_ipod_mode(IPOD_MODE_CHANGING);
 
-	if( 0 != pthread_create( &m_Mode_Change_Thread, NULL, Mode_Change_Thread, this) )
-	{
+	if ( 0  != pthread_create( &m_Mode_Change_Thread, NULL, Mode_Change_Thread, this) ) {
 		ALOGD("[CNXUEventHandler] Mode_Change_Thread thread fail!!!\n");
 		return -3;
-	}
-	else
-	{
-		ALOGD( "[CNXIPodDeviceManagerService] ChangeMode : m_Mode_Change_Thread:%p \n", m_Mode_Change_Thread);
+	} else {
+		ALOGD( "[CNXIPodDeviceManagerService] ChangeMode : m_Mode_Change_Thread:%p, mode:%d \n", m_Mode_Change_Thread, mode);
 		m_mode = mode;
-		return 0;
 	}
+
+	return 0;
 }
 
 int32_t IIPodDeviceManagerService::GetCurrentMode()
@@ -294,23 +296,26 @@ int32_t IIPodDeviceManagerService::GetCurrentMode()
 sp<IIPodDevMgr> getIPodDeviceManagerService()
 {
 	sp<IServiceManager> sm = defaultServiceManager();
-	if( sm == 0 ){
+	if (sm == 0 ) {
 		ALOGE("Cannot get defaultServiceManager()");
 		return NULL;
 		abort();
 	}
+
 	sp<IBinder> binder = sm->getService(String16(SERVICE_NAME));
-	if( binder == 0 ){
+	if (binder == 0 ) {
 		ALOGE("Cannot get %s Service", SERVICE_NAME);
 		return NULL;
 		abort();
 	}
+
 	sp<IIPodDevMgr> iPodCtrl = interface_cast<IIPodDevMgr>(binder);
-	if( iPodCtrl == 0 ){
+	if (iPodCtrl == 0 ) {
 		ALOGE("Cannot get iPod Control Interface");
 		return NULL;
 		abort();
 	}
+
 	return iPodCtrl;
 }
 
@@ -318,10 +323,11 @@ int32_t StartIPodDeviceManagerService(void)
 {
 	uint32_t guid[4] = { 0x00000000, };
 	NX_CCpuInfo *pCpuInfo = new NX_CCpuInfo();
+
 	pCpuInfo->GetGUID( guid );
 	delete pCpuInfo;
 
-	if( guid[0] != NEXELL_CHIP_GUID0 || 
+	if (guid[0] != NEXELL_CHIP_GUID0 || 
 		guid[1] != NEXELL_CHIP_GUID1 ||
 		guid[2] != NEXELL_CHIP_GUID2 || 
 		guid[3] != NEXELL_CHIP_GUID3 ) {
@@ -329,15 +335,13 @@ int32_t StartIPodDeviceManagerService(void)
 			return -1;
 	}
 
-	if( usbEventHandler == NULL )
-	{
+	if (usbEventHandler == NULL ) {
 		int32_t ret = 0;
 		ret = property_get_int32( IPOD_DEV_MODE_PROPERTY_NAME, 1 );		//	iAP1 Mode Default
 
 		ALOGD( "[CNXIPodDeviceManagerService] new CNXUEventHandler(), get_property:%d \n", ret);
 
 		usbEventHandler = new CNXUEventHandler();
-
 		usbEventHandler->Write_String((char *)IPOD_INSERT_DEVICE_PATH, (char *)"remove", sizeof(char)*6);
 		usbEventHandler->Write_String((char *)IPOD_PAIR_PATH, (char *)"unpair", sizeof(char)*6);
 	}
@@ -349,7 +353,6 @@ int32_t StartIPodDeviceManagerService(void)
 
 	ALOGD( "[CNXIPodDeviceManagerService] joinThreadPool(); \n");
 	IPCThreadState::self()->joinThreadPool();
-
 
 	delete usbEventHandler;
 

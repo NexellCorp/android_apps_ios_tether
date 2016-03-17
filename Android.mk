@@ -8,7 +8,7 @@ include $(LOCAL_PATH)/android/jni/libiconv.mk 		\
 	$(LOCAL_PATH)/android/jni/libimobiledevice.mk 	\
 	$(LOCAL_PATH)/android/jni/libxml2.mk 		\
 	$(LOCAL_PATH)/android/jni/usbmuxd.mk		\
-	$(LOCAL_PATH)/iOS_mgr_service/Android.mk	\
-	$(LOCAL_PATH)/libiOSMgr/Android.mk
+	$(LOCAL_PATH)/iOS_mgr_service/iOS_mgr.mk	\
+	$(LOCAL_PATH)/libiOSMgr/libiOSMgr.mk
 
 endif
