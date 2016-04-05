@@ -19,8 +19,8 @@
 
 #include <stdint.h>
 
-#include "include/CNXIPodManagerService.h"
-#include "include/NXIPodDeviceManager.h"
+#include <CNXIPodManagerService.h>
+#include <NXIPodDeviceManager.h>
 
 int32_t	NX_IPodChangeMode( int32_t mode )
 {

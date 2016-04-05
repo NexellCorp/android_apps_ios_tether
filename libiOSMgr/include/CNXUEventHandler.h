@@ -29,22 +29,10 @@
 #include <binder/IServiceManager.h>
 #include <binder/IPCThreadState.h>
 
+#include <NXIPodDeviceManager.h>
+
 
 using namespace android;
-
-#define VID_APPLE 0x5ac
-#define PID_APPLE 0x1200
-
-#define IPOD_INSERT_UEVENT_STRING	"add@/devices/platform/nxp-ehci/usb2/2-1"
-#define IPOD_REMOVE_UEVENT_STRING	"remove@/devices/platform/nxp-ehci/usb2/2-1"
-
-#define USB_IDVENDOR_PATH	"/sys/devices/platform/nxp-ehci/usb2/2-1/idVendor"
-#define USB_IDPRODUCT_PATH	"/sys/devices/platform/nxp-ehci/usb2/2-1/idProduct"
-
-#define IPOD_INSERT_DEVICE_PATH "/var/lib/ipod"
-#define IPOD_PAIR_PATH "/var/lib/pair"
-
-#define IPOD_CHANGE_IAP_DEVICE "/sys/class/iuihid"
 
 
 class CNXUEventHandler {
@@ -52,25 +40,40 @@ public:
 	CNXUEventHandler();
 	virtual ~CNXUEventHandler();
 
-	int 	get_ipod_mode();
-	void 	set_ipod_mode(int mode);
-	int 	Get_isIPOD();
-	int		Write_String(char * path, char *buffer, int len);
-	int		Read_String(char * path, char *buffer, int len);
+	struct ios_libusb_device_descriptor *get_ipod_descriptors(void);
+	int set_ipod_descriptors(void);
+	int find_InterfaceClass(
+		struct ios_libusb_device_descriptor *dev_descriptor,
+		uint8_t cfg_value,
+		uint8_t InterfaceClass,
+		uint8_t InterfaceSubClass);
+	int get_ipod_mode();
+	void set_ipod_mode(int mode);
+	int Get_isIPOD();
+	int Set_usb_config(int num);
+	int Set_ios_tethering(int num);
 
 private:
-	int			isIPOD;
-	int			ipod_mode;
-	char		m_Desc[4096];
-	char		m_path[4096];
-	pthread_t	m_hUEventThread;
+	struct ios_libusb_device_descriptor m_device_descriptor;
+	int isCPU;
+	int isIPOD;
+	int ipod_mode;
+	int m_idVendor;
+	int m_idProduct;
+	char m_Desc[4096];
+	char m_path[4096];
+
+	pthread_t m_hUEventThread;
 	static void	*UEventMonitorThreadStub( void * arg );
-	void		UEventMonitorThread();
+	void UEventMonitorThread();
 
-	pthread_t	m_hiPodPairThread;
+	pthread_t m_hiPodPairThread;
 	static void	*iPodPairMonitorThreadStub( void * arg );
-	void		iPodPairMonitorThread();
 
+	void iPodPairMonitorThread();
+	int Check_guid(void);
+	int Write_String(char * path, char *buffer, int len);
+	int Read_String(char * path, char *buffer, int len);
 };
 
 void NX_StartUEventHandler();

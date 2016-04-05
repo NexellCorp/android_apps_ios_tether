@@ -23,8 +23,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "include/CNXIPodManagerService.h"
-#include "include/NXCCpuInfo.h"
+#include <CNXIPodManagerService.h>
+#include <include/NXCCpuInfo.h>
 
 #define NX_DTAG "[NX_CCpuInfo]"
 //#include "NX_DbgMsg.h"

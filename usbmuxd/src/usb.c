@@ -864,7 +864,7 @@ static int ipod_set_config(int config_id)
 	}
 	devlist_failures = 0;
 
-	usbmuxd_log(LL_SPEW, "usb_discover: scanning %d devices", cnt);
+	usbmuxd_log(LL_INFO, "usb_discover: scanning %d devices", cnt);
 
 	// Mark all devices as dead, and do a mark-sweep like
 	// collection of dead devices

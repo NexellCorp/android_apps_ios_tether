@@ -19,18 +19,9 @@
 
 #include <cutils/properties.h>
 
-#include "include/CNXIPodManagerService.h"
-#include "include/CNXUEventHandler.h"
-#include "include/NXIPodDeviceManager.h"
-#include "include/NXCCpuInfo.h"
-
-//--------------------------------------------------------------------------------
-// NXP4330 / S5P4418 / NXP5430 / S5P6818 GUID
-// 069f41d2:4c3ae27d:68506bb8:33bc096f
-#define NEXELL_CHIP_GUID0	0x069f41d2
-#define NEXELL_CHIP_GUID1	0x4c3ae27d
-#define NEXELL_CHIP_GUID2	0x68506bb8
-#define NEXELL_CHIP_GUID3	0x33bc096f
+#include <CNXIPodManagerService.h>
+#include <CNXUEventHandler.h>
+#include <NXIPodDeviceManager.h>
 
 using namespace android;
 
@@ -124,7 +115,6 @@ status_t BnIPodCtrl::onTransact(uint32_t code, const Parcel& data, Parcel* reply
 	}
 }
 
-
 class IIPodDeviceManagerService : public BnIPodCtrl {
 private:
 	int32_t 		m_mode;
@@ -179,81 +169,16 @@ void *IIPodDeviceManagerService::Mode_Change_Thread(void *arg)
 	ALOGD( "[CNXIPodDeviceManagerService] property_set:%s, value:%s, ret:%d \n", IPOD_DEV_MODE_PROPERTY_NAME, value, ret);
 	
 	if (usbEventHandler->Get_isIPOD()) {
-		if (pObj->m_mode == IPOD_MODE_DEFAULT) {
-			//if(usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING
-			//	|| usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING_CHANGING)
-			{
-				ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -X\"); \n");
-				system("/system/bin/usbmuxdd -X");
-				sleep(2);
-			}
+		struct ios_libusb_device_descriptor *ios_dev_descriptor = usbEventHandler->get_ipod_descriptors();
 
-			ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -d\"); \n");
-			system("/system/bin/usbmuxdd -d");
-			usbEventHandler->set_ipod_mode(IPOD_MODE_DEFAULT);
-		}
-
-		if (pObj->m_mode == IPOD_MODE_IAP1) {
-			//if(usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING
-			//	|| usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING_CHANGING)
-			{
-				ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -X\"); \n");
-				system("/system/bin/usbmuxdd -X");
-				sleep(2);
-			}
-
-			ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -a\"); \n");
-			system("/system/bin/usbmuxdd -a");
-			usbEventHandler->set_ipod_mode(IPOD_MODE_IAP1);
-		}
-
-		if (pObj->m_mode == IPOD_MODE_IAP2) {
-			//if(usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING
-			//	|| usbEventHandler->get_ipod_mode() == IPOD_MODE_TETHERING_CHANGING)
-			{
-				ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -X\"); \n");
-				system("/system/bin/usbmuxdd -X");
-				sleep(2);
-			}
-			usbEventHandler->set_ipod_mode(IPOD_MODE_IAP2);
-		}
-
-		if (pObj->m_mode == IPOD_MODE_TETHERING) {
-			static int cnt = 0;
-			char PairString[20];
-			int ret = 0;
-
-			cnt = 0;
-			ALOGD( "[CNXIPodDeviceManagerService] system(\"usbmuxdd -v\"); \n");
-			system("/system/bin/usbmuxdd -v");
-
-			while (1) {
-				ret = usbEventHandler->Read_String((char *)IPOD_PAIR_PATH, (char *)PairString, 20);
-				ALOGD( "[CNXIPodDeviceManagerService] %s : %s \n", IPOD_PAIR_PATH, PairString);
-
-				 if ( !strncmp(PairString, "pair", sizeof((char *)"pair")) ) {
-					system("echo 0 >/sys/class/iOS/ipheth/regnetdev");
-					usbEventHandler->set_ipod_mode(IPOD_MODE_TETHERING);
-					break;
-				 }
-				sleep(1);
-
-				if (ret < 0 
-					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_DEFAULT
-					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_IAP1
-					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_IAP2
-					|| usbEventHandler->get_ipod_mode() == IPOD_MODE_NO_DEVIDE 
-					|| usbEventHandler->Get_isIPOD() == 0) {
-					break;
-				}
-
-				if (cnt ==2 ) {
-					usbEventHandler->set_ipod_mode(IPOD_MODE_TETHERING);
-				}
-
-				if (cnt < 5);	cnt ++ ;
-
-			}
+		if (!usbEventHandler->find_InterfaceClass(ios_dev_descriptor, pObj->m_mode, 255, 253)) {
+			usbEventHandler->Set_ios_tethering(pObj->m_mode);
+			usbEventHandler->set_ipod_mode(pObj->m_mode);
+			ios_dev_descriptor->current_config = pObj->m_mode;
+		}else {
+			usbEventHandler->Set_usb_config(pObj->m_mode);
+			usbEventHandler->set_ipod_mode(pObj->m_mode);
+			ios_dev_descriptor->current_config = pObj->m_mode;
 		}
 	} else {
 		usbEventHandler->set_ipod_mode(IPOD_MODE_NO_DEVIDE);
@@ -265,8 +190,10 @@ void *IIPodDeviceManagerService::Mode_Change_Thread(void *arg)
 int32_t IIPodDeviceManagerService::ChangeMode( int32_t mode )
 {
 	pthread_t		m_Mode_Change_Thread;
+	struct ios_libusb_device_descriptor *ios_dev_descriptor = usbEventHandler->get_ipod_descriptors();
 
-	if (usbEventHandler->get_ipod_mode() == IPOD_MODE_CHANGING) {
+	if (usbEventHandler->get_ipod_mode() == IPOD_MODE_CHANGING
+		||usbEventHandler->get_ipod_mode() == mode) {
 		return usbEventHandler->get_ipod_mode();
 	}
 
@@ -287,6 +214,8 @@ int32_t IIPodDeviceManagerService::GetCurrentMode()
 {
 	int32_t ret = 0;
 	ret = property_get_int32( IPOD_DEV_MODE_PROPERTY_NAME, 1 );		//	iAP1 Mode Default
+
+	usbEventHandler->set_ipod_descriptors();
 
 	ALOGD( "[CNXIPodDeviceManagerService] Server : GetCurrentMode (ipod_mode:%d), get_property:%d \n", usbEventHandler->get_ipod_mode(), ret);
 	return usbEventHandler->get_ipod_mode();
@@ -321,29 +250,12 @@ sp<IIPodDevMgr> getIPodDeviceManagerService()
 
 int32_t StartIPodDeviceManagerService(void)
 {
-	uint32_t guid[4] = { 0x00000000, };
-	NX_CCpuInfo *pCpuInfo = new NX_CCpuInfo();
-
-	pCpuInfo->GetGUID( guid );
-	delete pCpuInfo;
-
-	if (guid[0] != NEXELL_CHIP_GUID0 || 
-		guid[1] != NEXELL_CHIP_GUID1 ||
-		guid[2] != NEXELL_CHIP_GUID2 || 
-		guid[3] != NEXELL_CHIP_GUID3 ) {
-			ALOGD("[CNXIPodDeviceManagerService] Not Support CPU type.\n" );
-			return -1;
-	}
-
 	if (usbEventHandler == NULL ) {
 		int32_t ret = 0;
 		ret = property_get_int32( IPOD_DEV_MODE_PROPERTY_NAME, 1 );		//	iAP1 Mode Default
 
 		ALOGD( "[CNXIPodDeviceManagerService] new CNXUEventHandler(), get_property:%d \n", ret);
-
 		usbEventHandler = new CNXUEventHandler();
-		usbEventHandler->Write_String((char *)IPOD_INSERT_DEVICE_PATH, (char *)"remove", sizeof(char)*6);
-		usbEventHandler->Write_String((char *)IPOD_PAIR_PATH, (char *)"unpair", sizeof(char)*6);
 	}
 
 	defaultServiceManager()->addService(String16(SERVICE_NAME), new IIPodDeviceManagerService());

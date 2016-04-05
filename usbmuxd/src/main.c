@@ -381,8 +381,7 @@ static void usage()
 	printf("                  \tdevices connected (always works) and exit.\n");
 	printf("  -V, --version\t\tPrint version information and exit.\n");
 
-	printf("  -a, --iOS-Audio\tChange iOS Audio and exit.\n");
-	printf("  -d, --iOS-Default\tChange iOS Default and exit.\n");
+	printf("  -c, --iOS-USB-Config\tChange iOS USB Config and exit.\n");
 	printf("\n");
 }
 
@@ -404,18 +403,17 @@ static void parse_opts(int argc, char **argv)
 		{"exit", 0, NULL, 'x'},
 		{"force-exit", 0, NULL, 'X'},
 		{"version", 0, NULL, 'V'},
-		{"iOS-Audio", 0, NULL, 'a'},
-		{"iOS-Default", 0, NULL, 'd'},
+		{"iOS-Config", 1, NULL, 'c'},
 		{NULL, 0, NULL, 0}
 	};
 	int c;
 
 #ifdef HAVE_SYSTEMD
-	const char* opts_spec = "acdhfvVuU:xXsnz";
+	const char* opts_spec = "hfvVuU:c:xXsnz";
 #elif HAVE_UDEV
-	const char* opts_spec = "acdhfvVuU:xXnz";
+	const char* opts_spec = "hfvVuU:c:xXnz";
 #else
-	const char* opts_spec = "acdhfvVU:xXnz";
+	const char* opts_spec = "hfvVU:c:xXnz";
 #endif
 
 	while (1) {
@@ -467,11 +465,10 @@ static void parse_opts(int argc, char **argv)
 			opt_exit = 1;
 			exit_signal = SIGTERM;
 			break;
-		case 'a':
-			opt_ios_usb_con = 2;
-			break;
-		case 'd':
-			opt_ios_usb_con = 0;
+		case 'c':
+			usbmuxd_log(LL_INFO, "optarg:%s", optarg);
+
+			opt_ios_usb_con = atoi(optarg);
 			break;
 		default:
 			usage();
