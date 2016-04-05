@@ -1,7 +1,7 @@
 ifeq ($(BOARD_USES_IOS_IAP_TETHERING),true)
 
 PRODUCT_COPY_FILES	+= \
-	hardware/samsung_slsi/slsiap/ios_tether/libiOSMgr/lib/libiOSMgr.so:system/lib/libiOSMgr.so
+	hardware/samsung_slsi/slsiap/ios_tether/libiOSevent/lib/libiOSevent.so:system/lib/libiOSevent.so
 
 PRODUCT_PACKAGES += \
 	libiconv		\
@@ -11,8 +11,8 @@ PRODUCT_PACKAGES += \
 	libusbmuxd 		\
 	libimobiledevice	\
 	usbmuxdd		\
-	libiOSService		\
+	libiOSMgr		\
 	ipod_dev_mgr_server	\
 	ipod_dev_mgr_client
-#	libiOSMgr
+#	libiOSevent
 endif

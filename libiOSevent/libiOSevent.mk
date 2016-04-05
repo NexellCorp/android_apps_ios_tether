@@ -8,13 +8,13 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_C_INCLUDES += frameworks/base/include
 LOCAL_C_INCLUDES += system/core/include
 LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/libusb/libusb
-LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/libiOSMgr/include
-LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/iOS_mgr_service/include
+LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/libiOSevent/include
+LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/iOSMgr/include
 LOCAL_SRC_FILES := CNXUEventHandler.cpp		\
 			NXCCpuInfo.cpp
 
 
-LOCAL_MODULE := libiOSMgr
+LOCAL_MODULE := libiOSevent
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -26,12 +26,12 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_C_INCLUDES += frameworks/base/include
 LOCAL_C_INCLUDES += system/core/include
 LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/libusb/libusb
-LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/libiOSMgr/include
-LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/iOS_mgr_service/include
+LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/libiOSevent/include
+LOCAL_C_INCLUDES += hardware/samsung_slsi/slsiap/ios_tether/iOSMgr/include
 LOCAL_SRC_FILES := CNXUEventHandler.cpp		\
 			NXCCpuInfo.cpp
 
-LOCAL_MODULE := libiOSMgr
+LOCAL_MODULE := libiOSevent
 
 include $(BUILD_STATIC_LIBRARY)
 

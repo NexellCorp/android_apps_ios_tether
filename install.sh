@@ -34,8 +34,8 @@ sleep 5
 echo "adb push $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSMgr.so /system/lib/"
 adb push $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSMgr.so /system/lib/
 
-echo "adb push $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSService.so /system/lib/"
-adb push $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSService.so /system/lib/
+echo "adb push $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSevent.so /system/lib/"
+adb push $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSevent.so /system/lib/
 
 echo "adb push $PATH_LOCAL/$BOARD_NAME/system/bin/ipod_dev_mgr_client /system/bin"
 adb push $PATH_LOCAL/$BOARD_NAME/system/bin/ipod_dev_mgr_client /system/bin
@@ -46,5 +46,5 @@ adb push $PATH_LOCAL/$BOARD_NAME/system/bin/ipod_dev_mgr_server /system/bin
 echo "adb push $PATH_LOCAL/$BOARD_NAME/system/bin/usbmuxdd /system/bin"
 adb push $PATH_LOCAL/$BOARD_NAME/system/bin/usbmuxdd /system/bin
 
-cp -v $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSMgr.so $PATH_LOCAL_BIN/libiOSMgr/lib/libiOSMgr.so
+cp -v $PATH_LOCAL/$BOARD_NAME/system/lib/libiOSevent.so $PATH_LOCAL_BIN/libiOSevent/lib/libiOSevent.so
 
